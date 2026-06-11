@@ -1,5 +1,6 @@
 mod commands;
-mod db;
+pub mod db;
+pub mod headless;
 mod hub;
 mod models;
 mod sync_server;
