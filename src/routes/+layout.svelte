@@ -33,6 +33,7 @@
     { href: "/users", labelKey: "users" as const, roles: ["admin"] },
     { href: "/fees", labelKey: "fees" as const, roles: ["admin"] },
     { href: "/settings", labelKey: "settings" as const, roles: ["admin", "teacher"] },
+    { href: "/help", labelKey: "help" as const, roles: ["admin", "teacher", "student", "parent"] },
   ];
 
   let links = $derived(
@@ -62,7 +63,7 @@
   $effect(() => {
     if (!ready) return;
     const path = $page.url.pathname;
-    if (!user && path !== "/login") {
+    if (!user && path !== "/login" && path !== "/help") {
       goto("/login");
     }
     if (user && path === "/login") {

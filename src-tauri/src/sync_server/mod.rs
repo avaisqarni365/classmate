@@ -1,10 +1,11 @@
+use crate::commands::help::find_windows_installer;
 use crate::commands::sync::{apply_backup, build_backup};
 use crate::commands::whatsapp_api::{apply_webhook_payload, verify_webhook_token};
 use crate::models::{BackupPayload, SyncServerStatus};
 use axum::{
     extract::{Query, State as AxumState},
-    http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Json},
+    http::{header, HeaderMap, StatusCode},
+    response::{Html, IntoResponse, Json},
     routing::get,
     Router,
 };
@@ -67,6 +68,9 @@ impl SyncRuntime {
                     sync_token: token_for_routes,
                 };
                 let app = Router::new()
+                    .route("/download", get(download_page))
+                    .route("/download/win", get(download_installer))
+                    .route("/help", get(help_page))
                     .route("/api/sync/info", get(sync_info))
                     .route("/api/sync/backup", get(sync_export).post(sync_import))
                     .route("/api/whatsapp/webhook", get(whatsapp_verify).post(whatsapp_event))
@@ -202,4 +206,35 @@ async fn whatsapp_event(
     let conn = state.db.lock().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     apply_webhook_payload(&conn, &body).map_err(|_| StatusCode::BAD_REQUEST)?;
     Ok(StatusCode::OK)
+}
+
+async fn download_page() -> Html<&'static str> {
+    Html(include_str!("../../public_pages/download.html"))
+}
+
+async fn help_page() -> Html<&'static str> {
+    Html(include_str!("../../public_pages/help.html"))
+}
+
+async fn download_installer() -> Result<impl IntoResponse, StatusCode> {
+    let path = find_windows_installer().ok_or(StatusCode::NOT_FOUND)?;
+    let filename = path
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("ClassMate-setup.exe")
+        .to_string();
+    let bytes = tokio::task::spawn_blocking(move || std::fs::read(path))
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map_err(|_| StatusCode::NOT_FOUND)?;
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("application/octet-stream"),
+    );
+    let disposition = format!("attachment; filename=\"{filename}\"");
+    if let Ok(value) = axum::http::HeaderValue::from_str(&disposition) {
+        headers.insert(header::CONTENT_DISPOSITION, value);
+    }
+    Ok((headers, bytes))
 }

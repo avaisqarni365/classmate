@@ -55,6 +55,12 @@
     </form>
 
     <p class="hint">Demo: admin@classmate.local / admin123</p>
+
+    <p style="margin-top:1rem;font-size:.9rem;text-align:center">
+      <a href="/help">Help & setup guide</a>
+      ·
+      <a href="https://cm.codes-ai.uk/download" target="_blank" rel="noopener noreferrer">Download</a>
+    </p>
   </div>
 </div>
 

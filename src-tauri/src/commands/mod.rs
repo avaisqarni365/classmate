@@ -7,6 +7,7 @@ pub mod email;
 pub mod enrollments;
 pub mod forums;
 pub mod gradebook;
+pub mod help;
 pub mod lti;
 pub mod materials;
 pub mod parent;

@@ -474,6 +474,18 @@ export interface SyncServerStatus {
   hub_join_url?: string | null;
 }
 
+export interface HelpInfo {
+  app_version: string;
+  public_base_url?: string | null;
+  public_hub_path?: string | null;
+  webhook_url?: string | null;
+  hub_join_url?: string | null;
+  download_web_url?: string | null;
+  sync_running: boolean;
+  github_url: string;
+  windows_installer_available: boolean;
+}
+
 export interface SyncPeerResult {
   message: string;
   exported_at: string;

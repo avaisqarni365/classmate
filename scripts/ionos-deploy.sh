@@ -34,7 +34,7 @@ cd "$INSTALL_DIR/src-tauri"
 cargo build --release --bin classmate-server
 
 install -m 755 target/release/classmate-server /usr/local/bin/classmate-server
-mkdir -p "$DATA_DIR"
+mkdir -p "$DATA_DIR/downloads"
 
 echo "==> Installing systemd service"
 cat >/etc/systemd/system/classmate-server.service <<EOF
@@ -46,6 +46,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 Environment=CLASSMATE_DATA_DIR=$DATA_DIR
+Environment=CLASSMATE_DOWNLOAD_DIR=$DATA_DIR/downloads
 ExecStart=/usr/local/bin/classmate-server
 Restart=always
 RestartSec=5
@@ -58,34 +59,12 @@ systemctl daemon-reload
 systemctl enable classmate-server
 systemctl restart classmate-server
 
-echo "==> Installing Caddy"
-if ! command -v caddy >/dev/null 2>&1; then
-  apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
-  apt-get update -qq
-  apt-get install -y -qq caddy
+echo "==> nginx site (when nginx is installed)"
+if command -v nginx >/dev/null 2>&1; then
+  cp "$INSTALL_DIR/scripts/nginx-cm.codes-ai.uk.conf" "/etc/nginx/sites-available/$DOMAIN"
+  ln -sf "/etc/nginx/sites-available/$DOMAIN" "/etc/nginx/sites-enabled/$DOMAIN"
+  nginx -t && systemctl reload nginx
 fi
-
-cat >/etc/caddy/Caddyfile <<EOF
-$DOMAIN {
-    handle /hub/* {
-        uri strip_prefix /hub
-        reverse_proxy 127.0.0.1:8765
-    }
-
-    handle /api/sync/* {
-        reverse_proxy 127.0.0.1:8766
-    }
-
-    handle /api/whatsapp/webhook {
-        reverse_proxy 127.0.0.1:8766
-    }
-}
-EOF
-
-systemctl enable caddy
-systemctl reload caddy || systemctl restart caddy
 
 echo "==> Firewall"
 ufw allow OpenSSH
@@ -106,6 +85,8 @@ fi
 echo ""
 echo "Deploy complete."
 echo "  Domain:     https://$DOMAIN"
+echo "  Download:   https://$DOMAIN/download"
+echo "  Help:       https://$DOMAIN/help"
 echo "  Webhook:    https://$DOMAIN/api/whatsapp/webhook"
 echo "  Hub path:   https://$DOMAIN/hub/student (when Class Hub is running)"
 echo "  Data:       $DATA_DIR/classmate.db"

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClassMate Help</title>
+  <style>
+    :root { --bg:#0f172a; --card:#1e293b; --text:#e2e8f0; --muted:#94a3b8; --accent:#2563eb; }
+    body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--text); line-height:1.65; }
+    .wrap { max-width:820px; margin:0 auto; padding:2rem 1.25rem 3rem; }
+    h1 { font-size:1.75rem; margin:0 0 .5rem; }
+    h2 { font-size:1.15rem; margin:1.5rem 0 .5rem; color:#cbd5e1; }
+    .card { background:var(--card); border-radius:12px; padding:1.25rem; margin:1rem 0; }
+    a { color:#93c5fd; }
+    code { background:#0b1220; padding:.12rem .35rem; border-radius:4px; font-size:.88em; }
+    ol, ul { color:var(--muted); padding-left:1.25rem; }
+    li { margin:.35rem 0; }
+    .nav { margin:1rem 0 1.5rem; }
+    .nav a { margin-right:1rem; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; margin:.75rem 0; }
+    td, th { border:1px solid #334155; padding:.45rem .6rem; text-align:left; }
+    th { color:#cbd5e1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>ClassMate configuration guide</h1>
+    <p style="color:var(--muted)">Local desktop admin + public domain for students, sync, and WhatsApp webhooks.</p>
+    <div class="nav">
+      <a href="#install">Install</a>
+      <a href="#local">Local setup</a>
+      <a href="#domain">Domain</a>
+      <a href="#sync">Sync</a>
+      <a href="#hub">Class Hub</a>
+      <a href="#whatsapp">WhatsApp</a>
+      <a href="/download">Download</a>
+    </div>
+
+    <div class="card" id="install">
+      <h2 style="margin-top:0">1. Install (Windows)</h2>
+      <ol>
+        <li><a href="/download/win">Download the Windows installer</a> or build with <code>npm run tauri:build</code></li>
+        <li>Run setup — WebView2 is included on Windows 11</li>
+        <li>Launch ClassMate and sign in (change demo passwords immediately)</li>
+      </ol>
+      <table>
+        <tr><th>Role</th><th>Email</th><th>Default password</th></tr>
+        <tr><td>Admin</td><td>admin@classmate.local</td><td>admin123</td></tr>
+        <tr><td>Teacher</td><td>teacher@classmate.local</td><td>teacher123</td></tr>
+        <tr><td>Student</td><td>student@classmate.local</td><td>student123</td></tr>
+        <tr><td>Parent</td><td>parent@classmate.local</td><td>parent123</td></tr>
+      </table>
+    </div>
+
+    <div class="card" id="local">
+      <h2 style="margin-top:0">2. Local-only use (no domain)</h2>
+      <ol>
+        <li>Create courses, users, and assignments in the desktop app</li>
+        <li><strong>Class Hub</strong> — start a session; share the LAN join URL shown on the Hub page</li>
+        <li><strong>Backup</strong> — Settings → Backup & restore → export JSON regularly</li>
+        <li>Data lives in a SQLite file on your PC (AppData) — no separate database server</li>
+      </ol>
+    </div>
+
+    <div class="card" id="domain">
+      <h2 style="margin-top:0">3. Public domain (e.g. cm.codes-ai.uk)</h2>
+      <p>Point DNS <strong>A record</strong> <code>cm</code> → your server IP (Ionos VPS).</p>
+      <p>This server runs <code>classmate-server</code> on port <strong>8766</strong>. nginx proxies:</p>
+      <ul>
+        <li><code>/api/sync/</code> — peer backup sync</li>
+        <li><code>/api/whatsapp/webhook</code> — Meta callbacks</li>
+        <li><code>/hub/</code> — Class Hub student PWA (when hub is running on port 8765)</li>
+        <li><code>/download</code> — this download page</li>
+      </ul>
+      <p>In the desktop app: <strong>Settings → LAN peer sync → Public base URL</strong> = <code>https://cm.codes-ai.uk</code>, hub path <code>/hub</code>.</p>
+      <p>Then run <code>certbot --nginx -d cm.codes-ai.uk</code> on the server for HTTPS.</p>
+    </div>
+
+    <div class="card" id="sync">
+      <h2 style="margin-top:0">4. Sync desktop ↔ server</h2>
+      <ol>
+        <li>On server: <code>systemctl status classmate-server</code> (always on)</li>
+        <li>On Windows: Settings → Start sync server (optional if server handles webhooks)</li>
+        <li>Use the same <strong>sync token</strong> on both machines</li>
+        <li><strong>Push to peer</strong> / <strong>Pull from peer</strong> with URL <code>https://cm.codes-ai.uk/api/sync/</code> and header token</li>
+      </ol>
+    </div>
+
+    <div class="card" id="hub">
+      <h2 style="margin-top:0">5. Class Hub (live class)</h2>
+      <ol>
+        <li>Hub page → pick course → Start hub</li>
+        <li>Share join URL (uses public domain when configured)</li>
+        <li>Students open URL on phones — PIN required</li>
+      </ol>
+    </div>
+
+    <div class="card" id="whatsapp">
+      <h2 style="margin-top:0">6. WhatsApp Business API</h2>
+      <ol>
+        <li>Settings → WhatsApp Business API — phone number ID, access token, verify token</li>
+        <li>Meta webhook URL = value shown in Settings (must be HTTPS)</li>
+        <li>Subscribe to: messages, group_lifecycle_update, group_participants_update, group_settings_update, group_status_update</li>
+        <li>Groups page — link or create native groups; enable member opt-in before sending</li>
+      </ol>
+    </div>
+
+    <p style="color:var(--muted);font-size:.9rem">
+      Source: <a href="https://github.com/avaisqarni365/classmate">github.com/avaisqarni365/classmate</a> ·
+      <a href="/download">Download</a>
+    </p>
+  </div>
+</body>
+</html>

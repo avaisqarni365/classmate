@@ -42,6 +42,8 @@ export const en = {
 
     fees: "Cash book",
 
+    help: "Help",
+
   },
 
   tenancy: {
@@ -607,6 +609,154 @@ export const en = {
     settingsSaved: "Cash book settings saved.",
 
     testIntegration: "Test Invoice Ninja",
+
+  },
+
+  help: {
+
+    title: "Help & setup guide",
+
+    subtitle: "Install ClassMate locally, connect your domain, sync data, and configure WhatsApp.",
+
+    toc: {
+
+      download: "Download",
+
+      local: "Local setup",
+
+      domain: "Domain",
+
+      sync: "Sync",
+
+      hub: "Class Hub",
+
+      whatsapp: "WhatsApp",
+
+      security: "Security",
+
+    },
+
+    download: {
+
+      title: "Download ClassMate (Windows)",
+
+      body: "Install the desktop app on your admin PC. SQLite is built in — no separate database server.",
+
+      web: "Open web download page",
+
+      direct: "Download installer (.exe)",
+
+      build: "Or build from source (Node.js 20+ and Rust required):",
+
+      output: "Installer output: src-tauri\\target\\release\\bundle\\nsis\\ClassMate_0.26.0_x64-setup.exe",
+
+    },
+
+    local: {
+
+      title: "Local setup (no domain)",
+
+      step1: "Sign in and change all demo passwords under Users.",
+
+      step2: "Create courses, enroll students, add assignments and materials.",
+
+      step3: "Start Class Hub for live sessions — share the join URL with students.",
+
+      step4: "Export backups regularly under Settings → Backup & restore.",
+
+      step5: "All data is stored in a local SQLite file on this computer.",
+
+    },
+
+    demo: {
+
+      role: "Role",
+
+      email: "Email",
+
+      password: "Password",
+
+    },
+
+    domain: {
+
+      title: "Public domain (e.g. cm.codes-ai.uk)",
+
+      body: "Use a VPS + reverse proxy so students, sync, and WhatsApp webhooks reach ClassMate over HTTPS.",
+
+      step1: "GoDaddy DNS: A record cm → your server IP (Ionos: 212.227.54.250).",
+
+      step2: "Settings → LAN peer sync → Public base URL = https://your-domain (hub path /hub).",
+
+      step3: "On the server: nginx + certbot for HTTPS. See DEPLOY.md in the GitHub repo.",
+
+      configured: "Your public URL:",
+
+      notConfigured: "Public URL not set yet — configure in Settings → LAN peer sync.",
+
+    },
+
+    sync: {
+
+      title: "LAN / server sync",
+
+      body: "Keep the same database on your PC and your public server.",
+
+      item1: "Start sync server (desktop or Linux classmate-server service).",
+
+      item2: "Use the same sync token on both machines.",
+
+      item3: "Push or pull via Settings using https://your-domain/api/sync/ and the x-sync-token header.",
+
+      status: "Sync server",
+
+      running: "running",
+
+      stopped: "stopped",
+
+    },
+
+    hub: {
+
+      title: "Class Hub",
+
+      body: "Live student portal for materials, quizzes, polls, and submissions during class.",
+
+      step1: "Open Class Hub → select course → Start hub.",
+
+      step2: "Share the join URL (uses your public domain when configured).",
+
+      step3: "Students enter the session PIN shown on the Hub page.",
+
+    },
+
+    whatsapp: {
+
+      title: "WhatsApp Business API",
+
+      body: "Optional automated messaging to opted-in group members.",
+
+      step1: "Settings → WhatsApp Business API — enter Meta credentials and webhook verify token.",
+
+      step2: "Paste the webhook URL from Settings into the Meta developer dashboard.",
+
+      step3: "Subscribe to group and message webhook fields.",
+
+      step4: "Groups page — manage consent, native groups, and delivery log.",
+
+    },
+
+    security: {
+
+      title: "Before going live",
+
+      item1: "Change all default demo passwords immediately.",
+
+      item2: "Use a strong sync token; it protects backup import/export.",
+
+      item3: "Only expose Hub and API routes via HTTPS — admin UI stays on the desktop app.",
+
+    },
 
   },
 

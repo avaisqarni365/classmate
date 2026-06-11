@@ -1532,3 +1532,21 @@ pub struct WhatsAppGroupSettingsEvent {
     pub error_summary: Option<String>,
     pub received_at: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HelpInfo {
+    pub app_version: String,
+    #[serde(default)]
+    pub public_base_url: Option<String>,
+    #[serde(default)]
+    pub public_hub_path: Option<String>,
+    #[serde(default)]
+    pub webhook_url: Option<String>,
+    #[serde(default)]
+    pub hub_join_url: Option<String>,
+    #[serde(default)]
+    pub download_web_url: Option<String>,
+    pub sync_running: bool,
+    pub github_url: String,
+    pub windows_installer_available: bool,
+}

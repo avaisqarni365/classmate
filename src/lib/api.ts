@@ -119,6 +119,7 @@ import type {
   ManageWhatsAppJoinRequestsInput,
   WhatsAppGroupParticipantEvent,
   WhatsAppGroupSettingsEvent,
+  HelpInfo,
 } from "./types";
 
 export const api = {
@@ -274,6 +275,7 @@ export const api = {
   getUiPreferences: () => invoke<UiPreferences>("get_ui_preferences"),
   setUiPreferences: (input: UiPreferences) => invoke<void>("set_ui_preferences", { input }),
   getSyncStatus: () => invoke<SyncServerStatus>("get_sync_status"),
+  getHelpInfo: () => invoke<HelpInfo>("get_help_info"),
   startSyncServer: () => invoke<SyncServerStatus>("start_sync_server"),
   stopSyncServer: () => invoke<SyncServerStatus>("stop_sync_server"),
   setSyncToken: (token: string) => invoke<void>("set_sync_token", { token }),

@@ -34,6 +34,8 @@ MIT licensed — safe for commercial use.
 
 See [ROADMAP.md](./ROADMAP.md) for queued work.
 
+**Help:** in-app **Help** page, web [cm.codes-ai.uk/help](https://cm.codes-ai.uk/help), or [HELP.md](./HELP.md).
+
 ## Build Windows installer
 
 ```powershell

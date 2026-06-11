@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Download ClassMate</title>
+  <style>
+    :root { --bg:#0f172a; --card:#1e293b; --text:#e2e8f0; --muted:#94a3b8; --accent:#2563eb; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+    .wrap { max-width:720px; margin:0 auto; padding:2rem 1.25rem 3rem; }
+    .logo { display:flex; align-items:center; gap:.75rem; margin-bottom:1.5rem; }
+    .mark { width:48px; height:48px; border-radius:12px; background:var(--accent); display:grid; place-items:center; font-weight:700; }
+    h1 { margin:0 0 .25rem; font-size:1.75rem; }
+    p.lead { color:var(--muted); margin:0 0 1.5rem; }
+    .card { background:var(--card); border-radius:12px; padding:1.25rem; margin-bottom:1rem; }
+    .btn { display:inline-block; background:var(--accent); color:#fff; text-decoration:none; padding:.75rem 1.25rem; border-radius:8px; font-weight:600; margin:.25rem .5rem .25rem 0; }
+    .btn.secondary { background:#334155; }
+    ul { margin:.5rem 0; padding-left:1.25rem; color:var(--muted); }
+    code { background:#0b1220; padding:.15rem .4rem; border-radius:4px; font-size:.9em; }
+    footer { margin-top:2rem; font-size:.85rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">
+      <div class="mark">CM</div>
+      <div>
+        <h1>Download ClassMate</h1>
+        <p class="lead">Local-first classroom platform for Windows. SQLite built in — no cloud database required.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Windows installer</h2>
+      <p>Install on the admin PC (or a Windows VPS). Students and webhooks use your public domain; day-to-day admin runs in this desktop app.</p>
+      <a class="btn" href="/download/win">Download for Windows (.exe)</a>
+      <a class="btn secondary" href="/help">Setup help</a>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">After install</h2>
+      <ul>
+        <li>Sign in: <code>admin@classmate.local</code> / <code>admin123</code> — change passwords in <strong>Users</strong></li>
+        <li>Open <strong>Settings → LAN peer sync → Start sync server</strong> (or use the Linux server)</li>
+        <li>Set <strong>Public base URL</strong> to your domain (e.g. <code>https://cm.codes-ai.uk</code>)</li>
+        <li>Start <strong>Class Hub</strong> when running a live session</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Build from source</h2>
+      <p>Requires Node.js 20+ and Rust. Clone from GitHub and run <code>npm run tauri:build</code>.</p>
+      <a class="btn secondary" href="https://github.com/avaisqarni365/classmate">View on GitHub</a>
+    </div>
+
+    <footer>
+      ClassMate v0.26 · MIT license · <a href="/help" style="color:#93c5fd">Full configuration guide</a>
+    </footer>
+  </div>
+</body>
+</html>

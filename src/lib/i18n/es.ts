@@ -42,6 +42,8 @@ export const es = {
 
     fees: "Libro de caja",
 
+    help: "Ayuda",
+
   },
 
   tenancy: {
@@ -607,6 +609,130 @@ export const es = {
     settingsSaved: "Ajustes del libro guardados.",
 
     testIntegration: "Probar Invoice Ninja",
+
+  },
+
+  help: {
+
+    title: "Ayuda y configuración",
+
+    subtitle: "Instala ClassMate, conecta tu dominio, sincroniza datos y configura WhatsApp.",
+
+    toc: { download: "Descargar", local: "Local", domain: "Dominio", sync: "Sync", hub: "Class Hub", whatsapp: "WhatsApp", security: "Seguridad" },
+
+    download: {
+
+      title: "Descargar ClassMate (Windows)",
+
+      body: "Instala la app de escritorio en el PC del administrador. SQLite incluido.",
+
+      web: "Abrir página de descarga",
+
+      direct: "Descargar instalador (.exe)",
+
+      build: "O compila desde el código (Node.js 20+ y Rust):",
+
+      output: "Salida: src-tauri\\target\\release\\bundle\\nsis\\ClassMate_0.26.0_x64-setup.exe",
+
+    },
+
+    local: {
+
+      title: "Uso local (sin dominio)",
+
+      step1: "Inicia sesión y cambia las contraseñas demo en Usuarios.",
+
+      step2: "Crea cursos, matrículas, tareas y materiales.",
+
+      step3: "Inicia Class Hub para sesiones en vivo.",
+
+      step4: "Exporta copias de seguridad en Ajustes.",
+
+      step5: "Los datos se guardan en SQLite en este equipo.",
+
+    },
+
+    demo: { role: "Rol", email: "Correo", password: "Contraseña" },
+
+    domain: {
+
+      title: "Dominio público (ej. cm.codes-ai.uk)",
+
+      body: "Usa un VPS y proxy inverso para HTTPS.",
+
+      step1: "DNS GoDaddy: registro A cm → IP del servidor.",
+
+      step2: "Ajustes → sync LAN → URL pública https://tu-dominio",
+
+      step3: "En el servidor: nginx + certbot. Ver DEPLOY.md.",
+
+      configured: "URL pública:",
+
+      notConfigured: "URL pública no configurada — Ajustes → sync LAN.",
+
+    },
+
+    sync: {
+
+      title: "Sincronización LAN / servidor",
+
+      body: "Mantén la misma base de datos en PC y servidor.",
+
+      item1: "Inicia el servidor sync (escritorio o classmate-server en Linux).",
+
+      item2: "Usa el mismo token de sync en ambos equipos.",
+
+      item3: "Push/Pull en Ajustes con https://tu-dominio/api/sync/",
+
+      status: "Servidor sync",
+
+      running: "activo",
+
+      stopped: "detenido",
+
+    },
+
+    hub: {
+
+      title: "Class Hub",
+
+      body: "Portal en vivo para alumnos.",
+
+      step1: "Class Hub → curso → Iniciar hub.",
+
+      step2: "Comparte la URL de acceso.",
+
+      step3: "Los alumnos usan el PIN de la sesión.",
+
+    },
+
+    whatsapp: {
+
+      title: "WhatsApp Business API",
+
+      body: "Mensajería automática opcional.",
+
+      step1: "Ajustes → WhatsApp Business API — credenciales Meta.",
+
+      step2: "Pega la URL del webhook en Meta.",
+
+      step3: "Suscríbete a los campos de webhook de grupo y mensajes.",
+
+      step4: "Página Groups — consentimiento y grupos.",
+
+    },
+
+    security: {
+
+      title: "Antes de producción",
+
+      item1: "Cambia todas las contraseñas demo.",
+
+      item2: "Usa un token sync fuerte.",
+
+      item3: "Solo expón Hub y API por HTTPS.",
+
+    },
 
   },
 

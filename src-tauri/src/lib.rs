@@ -131,6 +131,7 @@ pub fn run() {
             commands::sync::get_ui_preferences,
             commands::sync::set_ui_preferences,
             commands::sync::get_sync_status,
+            commands::help::get_help_info,
             commands::sync::start_sync_server,
             commands::sync::stop_sync_server,
             commands::sync::set_sync_token,
