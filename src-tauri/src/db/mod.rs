@@ -275,6 +275,27 @@ fn migrate_v20(conn: &Connection) -> rusqlite::Result<()> {
     Ok(())
 }
 
+fn get_or_create_school(
+    conn: &Connection,
+    code: &str,
+    name: &str,
+    now: &str,
+) -> rusqlite::Result<String> {
+    if let Ok(id) = conn.query_row(
+        "SELECT id FROM schools WHERE code = ?1",
+        params![code],
+        |row| row.get(0),
+    ) {
+        return Ok(id);
+    }
+    let id = Uuid::new_v4().to_string();
+    conn.execute(
+        "INSERT INTO schools (id, name, code, created_at) VALUES (?1, ?2, ?3, ?4)",
+        params![id, name, code, now],
+    )?;
+    Ok(id)
+}
+
 fn seed_if_empty(conn: &Connection) -> rusqlite::Result<()> {
     let count: i64 = conn.query_row("SELECT COUNT(*) FROM users", [], |row| row.get(0))?;
     if count > 0 {
@@ -288,22 +309,14 @@ fn seed_if_empty(conn: &Connection) -> rusqlite::Result<()> {
     let parent_id = Uuid::new_v4().to_string();
     let course_id = Uuid::new_v4().to_string();
     let assignment_id = Uuid::new_v4().to_string();
-    let main_school_id = Uuid::new_v4().to_string();
-    let east_school_id = Uuid::new_v4().to_string();
 
     let admin_hash = hash("admin123", DEFAULT_COST).unwrap_or_else(|_| "invalid".into());
     let teacher_hash = hash("teacher123", DEFAULT_COST).unwrap_or_else(|_| "invalid".into());
     let student_hash = hash("student123", DEFAULT_COST).unwrap_or_else(|_| "invalid".into());
     let parent_hash = hash("parent123", DEFAULT_COST).unwrap_or_else(|_| "invalid".into());
 
-    conn.execute(
-        "INSERT INTO schools (id, name, code, created_at) VALUES (?1, ?2, ?3, ?4)",
-        params![main_school_id, "Main Campus", "MAIN", now],
-    )?;
-    conn.execute(
-        "INSERT INTO schools (id, name, code, created_at) VALUES (?1, ?2, ?3, ?4)",
-        params![east_school_id, "East Campus", "EAST", now],
-    )?;
+    let main_school_id = get_or_create_school(conn, "MAIN", "Main Campus", &now)?;
+    let east_school_id = get_or_create_school(conn, "EAST", "East Campus", &now)?;
 
     conn.execute(
         "INSERT INTO users (id, email, name, role, password_hash, created_at, updated_at)
