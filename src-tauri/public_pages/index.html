@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClassMate · Codes AI Limited UK</title>
+  <meta name="description" content="ClassMate classroom platform by Codes AI Limited UK. Part of the codes-ai.uk education and AI ecosystem." />
+  <style>
+    :root {
+      --bg: #070b14; --surface: #111827; --card: #1a2332; --border: #2a3544;
+      --text: #e8edf4; --muted: #94a3b8; --accent: #2563eb; --accent2: #7c3aed;
+      --ok: #22c55e; --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    a { color: #93c5fd; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+    header.top { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: .75rem; }
+    .brand { display: flex; align-items: center; gap: .75rem; }
+    .logo { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: grid; place-items: center; font-weight: 800; font-size: .85rem; }
+    .brand h1 { margin: 0; font-size: 1.1rem; }
+    .brand p { margin: 0; font-size: .78rem; color: var(--muted); }
+    nav.top-nav { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .9rem; }
+    .hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 2rem; padding: 2.5rem 0 2rem; align-items: start; }
+    @media (max-width: 860px) { .hero { grid-template-columns: 1fr; } }
+    .hero h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1.15; margin: 0 0 1rem; }
+    .hero .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 1.5rem; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+    .pill { background: var(--surface); border: 1px solid var(--border); padding: .35rem .75rem; border-radius: 999px; font-size: .78rem; color: var(--muted); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; }
+    .login-card h3 { margin: 0 0 .25rem; }
+    .login-card p.sub { color: var(--muted); font-size: .88rem; margin: 0 0 1rem; }
+    label { display: block; font-size: .82rem; color: var(--muted); margin-bottom: .25rem; }
+    input { width: 100%; padding: .65rem .75rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); margin-bottom: .75rem; font-size: .95rem; }
+    .btn { display: inline-block; border: none; cursor: pointer; background: var(--accent); color: #fff; padding: .7rem 1.1rem; border-radius: 8px; font-weight: 600; font-size: .92rem; text-decoration: none; }
+    .btn:hover { filter: brightness(1.08); text-decoration: none; }
+    .btn.secondary { background: #334155; }
+    .btn.block { width: 100%; text-align: center; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+    .err { color: #fca5a5; font-size: .85rem; min-height: 1.2rem; margin-top: .5rem; }
+    section { margin-top: 2.5rem; }
+    section > h2 { font-size: 1.35rem; margin-bottom: .35rem; }
+    section > .sec-lead { color: var(--muted); margin-bottom: 1.25rem; max-width: 720px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .ecosystem-card h3 { margin: 0 0 .35rem; font-size: 1.05rem; }
+    .ecosystem-card .tag { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--warn); margin-bottom: .5rem; }
+    .ecosystem-card p { color: var(--muted); font-size: .9rem; margin: 0 0 .75rem; }
+    .ecosystem-card ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: .88rem; }
+    .ecosystem-card li { margin: .25rem 0; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
+    footer .links { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: .75rem; }
+    @media (max-width: 640px) {
+      header.top { flex-direction: column; align-items: flex-start; }
+      nav.top-nav { width: 100%; gap: .65rem .85rem; }
+      .btn-row { flex-direction: column; }
+      .btn-row .btn { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <div class="logo">CM</div>
+        <div>
+          <h1>ClassMate</h1>
+          <p>A project of <strong>Codes AI Limited UK</strong></p>
+        </div>
+      </div>
+      <nav class="top-nav">
+        <a href="https://artizai.uk" target="_blank" rel="noopener">artizai.uk</a>
+        <a href="#ecosystem">Ecosystem</a>
+        <a href="#classmate">ClassMate</a>
+        <a href="#login">Sign in</a>
+        <a href="/download">Download</a>
+        <a href="/help">Help</a>
+        <a href="https://codes-ai.uk" target="_blank" rel="noopener">codes-ai.uk</a>
+      </nav>
+    </header>
+
+    <div class="hero">
+      <div>
+        <div class="pill-row">
+          <span class="pill">Codes AI Limited UK</span>
+          <span class="pill">Company #16078672</span>
+          <span class="pill">GDPR · NDA ready</span>
+          <span class="pill">cm.codes-ai.uk</span>
+        </div>
+        <h2>ARTIZAI Academy + ClassMate — lectures with AI labs in every course</h2>
+        <p class="lead">
+          <strong><a href="https://artizai.uk" target="_blank" rel="noopener">ARTIZAI Academy UK</a></strong>
+          is our full-spectrum AI innovation school (ages 6–19+). <strong>ClassMate</strong> connects every lecture note —
+          OpenStax textbooks, teacher notes, and links — to the matching ARTIZAI lab
+          (Science, Maths, Arts, Languages, Humanities, Social Science, Making &amp; Engineering).
+          Built by <a href="https://codes-ai.uk" target="_blank" rel="noopener">Codes AI Limited UK</a>
+          alongside <strong>Codes College</strong> and <strong>GenX</strong>.
+        </p>
+        <div class="btn-row">
+          <a class="btn" href="/download/win">Download Windows app</a>
+          <a class="btn secondary" href="/help">Setup guide</a>
+          <a class="btn secondary" href="#login">Student / parent login</a>
+        </div>
+      </div>
+
+      <div class="card login-card" id="login">
+        <h3>Sign in</h3>
+        <p class="sub">Students, parents, teachers, and admins can sign in on the web.<br>
+        Full school admin (users, fees, WhatsApp): use the <a href="/download">desktop app</a>.</p>
+        <form id="loginForm">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="username" required placeholder="student@classmate.local" />
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" required />
+          <button class="btn block" type="submit">Sign in to portal</button>
+          <div class="err" id="loginErr"></div>
+        </form>
+        <p style="font-size:.78rem;color:var(--muted);margin:.75rem 0 0">
+          Demo: student@classmate.local / student123 · parent@classmate.local / parent123 · teacher@classmate.local / teacher123
+        </p>
+      </div>
+    </div>
+
+    <section id="ecosystem">
+      <h2>The Codes AI education &amp; technology ecosystem</h2>
+      <p class="sec-lead">
+        Codes AI Limited UK builds full-stack products with AI — from enterprise data platforms to schools,
+        academies, and classroom software. All projects share the same engineering standards:
+        production deployment on IONOS, nginx, SSL, and privacy-first design.
+      </p>
+      <div class="grid-2">
+        <div class="card ecosystem-card">
+          <div class="tag">Main concept · AI learning</div>
+          <h3><a href="https://artizai.uk" target="_blank" rel="noopener">ARTIZAI Academy UK</a></h3>
+          <p>Full-spectrum AI innovation school for ages 6–19+. AI embedded across every subject —
+          not isolated computing lessons. ClassMate links every lecture note to the matching ARTIZAI lab.</p>
+          <ul>
+            <li>Seven labs: Science, Maths, Arts, Social Science, Languages, Humanities, Making &amp; Engineering</li>
+            <li>Professional tools: AlphaFold, Midjourney, Fusion 360, Claude, Roboflow, and more</li>
+            <li>12-week project sprints with portfolio-ready outputs · North West UK pilot 2026</li>
+          </ul>
+        </div>
+
+        <div class="card ecosystem-card">
+          <div class="tag">Parent company</div>
+          <h3><a href="https://codes-ai.uk" target="_blank" rel="noopener">Codes AI Limited UK</a></h3>
+          <p>Vibe Engineering Studio — full-stack products with AI. Claude, Cursor, and modern cloud stack.
+          From idea to production in days, not months.</p>
+          <ul>
+            <li>AI &amp; machine learning, data engineering, cloud architecture</li>
+            <li>Web &amp; mobile apps, custom CRM/ERP/SaaS platforms</li>
+            <li>Trusted by enterprise leaders — Anglian Water, Carl Zeiss, Siemens, and more</li>
+            <li>Contact: <a href="mailto:info@codes-ai.uk">info@codes-ai.uk</a> · +44 7586 094540</li>
+          </ul>
+        </div>
+
+        <div class="card ecosystem-card">
+          <div class="tag">School platform</div>
+          <h3><a href="https://college.codes-ai.uk" target="_blank" rel="noopener">Codes College</a></h3>
+          <p>Codes College runs on Gibbon — the free, open, flexible school platform designed by teachers for learning.
+          Student and staff applications managed online.</p>
+          <ul>
+            <li>Student applications for prospective learners</li>
+            <li>Staff recruitment and job openings</li>
+            <li>Integrated school administration on Gibbon v29</li>
+          </ul>
+        </div>
+
+        <div class="card ecosystem-card">
+          <div class="tag">Schooling system</div>
+          <h3><a href="https://genx.codes-ai.uk" target="_blank" rel="noopener">GenX Schooling System</a></h3>
+          <p>The GenX schooling system — powered by Gibbon — for Code-AI's broader education network.
+          Online applications for students and staff.</p>
+          <ul>
+            <li>Student application portal for interested families</li>
+            <li>Staff applications and recruitment workflow</li>
+            <li>Part of the Codes AI education infrastructure</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="classmate">
+      <h2>ClassMate — lectures + OpenStax + ARTIZAI AI labs</h2>
+      <p class="sec-lead">
+        ClassMate is Codes AI's classroom product: SQLite built in, OpenStax textbooks, and an ARTIZAI AI Lab
+        automatically matched to every lecture note. Teachers run the Windows admin app; students and parents use the web portal.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="margin-top:0">For administrators &amp; teachers</h3>
+          <p style="color:var(--muted);font-size:.9rem">Full desktop app — courses, gradebook, Class Hub live sessions, WhatsApp, fees, analytics.</p>
+          <a class="btn" href="/download">Get Windows installer</a>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">For teachers &amp; admins</h3>
+          <p style="color:var(--muted);font-size:.9rem">Web portal — gradebook and announcements. Admins see all courses; full settings in desktop app.</p>
+          <a class="btn secondary" href="#login">Sign in above</a>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">For students &amp; parents</h3>
+          <p style="color:var(--muted);font-size:.9rem">Web portal — enrolled courses, upcoming assignments, grades, and parent grade reports.</p>
+          <a class="btn secondary" href="#login">Sign in above</a>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Live Class Hub</h3>
+          <p style="color:var(--muted);font-size:.9rem">During live lessons, students join via <code>/hub/</code> with a session PIN from their teacher.</p>
+          <a class="btn secondary" href="/help#hub">Hub guide</a>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Setup &amp; sync</h3>
+          <p style="color:var(--muted);font-size:.9rem">Configure public URL, sync desktop ↔ server, WhatsApp webhooks, and backups.</p>
+          <a class="btn secondary" href="/help">Full configuration guide</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="links">
+        <a href="https://codes-ai.uk" target="_blank" rel="noopener">codes-ai.uk</a>
+        <a href="https://artizai.uk" target="_blank" rel="noopener">artizai.uk</a>
+        <a href="https://college.codes-ai.uk" target="_blank" rel="noopener">Codes College</a>
+        <a href="https://genx.codes-ai.uk" target="_blank" rel="noopener">GenX</a>
+        <a href="https://github.com/avaisqarni365/classmate" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <p>© Codes AI Limited UK · ClassMate v1.0 · MIT license · <a href="mailto:info@codes-ai.uk">info@codes-ai.uk</a></p>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('loginErr');
+      err.textContent = '';
+      try {
+        const res = await fetch('/api/web/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          err.textContent = data.error || 'Login failed';
+          return;
+        }
+        window.location.href = '/portal';
+      } catch {
+        err.textContent = 'Network error — try again';
+      }
+    });
+  </script>
+</body>
+</html>

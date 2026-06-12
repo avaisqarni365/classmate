@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS course_materials (
   id TEXT PRIMARY KEY,
   course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
-  kind TEXT NOT NULL DEFAULT 'note' CHECK (kind IN ('note', 'link', 'file')),
+  kind TEXT NOT NULL DEFAULT 'note' CHECK (kind IN ('note', 'link', 'file', 'textbook', 'speak_note', 'handwriting')),
   content TEXT NOT NULL,
   created_at TEXT NOT NULL
 );

@@ -1,12 +1,16 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { api } from "$lib/api";
+  import { materialNotes, materialPdfUrl, materialReadUrl, parseSpeakNoteContent, parseHandwritingContent } from "$lib/materials";
+  import { speakText } from "$lib/speech";
+  import AiLabPanel from "$lib/components/AiLabPanel.svelte";
   import { t } from "$lib/i18n";
-  import type { StudentCourseDetail, StudentDashboard } from "$lib/types";
+  import type { StudentCourseDetail, StudentDashboard, MaterialWithAiLab } from "$lib/types";
 
   let dashboard = $state<StudentDashboard | null>(null);
   let selectedCourseId = $state("");
   let detail = $state<StudentCourseDetail | null>(null);
+  let lectures = $state<MaterialWithAiLab[]>([]);
   let error = $state("");
   let submitDrafts = $state<Record<string, string>>({});
   let submitFiles = $state<Record<string, File | null>>({});
@@ -27,6 +31,7 @@
       return;
     }
     detail = await api.getMyCourse(selectedCourseId);
+    lectures = await api.listCourseLectures(selectedCourseId);
   }
 
   function readFileAsBase64(file: File): Promise<string> {
@@ -171,10 +176,54 @@
 
       <div class="card">
         <h3 style="margin-top: 0">{t("student.materials")}</h3>
-        {#each detail.materials as m}
+        {#each lectures as lecture}
+          {@const m = lecture.material}
           <div class="item" style="border-bottom: 1px solid var(--border); padding: 0.6rem 0">
             <strong>{m.title}</strong>
-            <p style="margin: 0.25rem 0; color: var(--muted); font-size: 0.9rem">{m.content}</p>
+            {#if m.kind === "textbook"}
+              <p style="margin: 0.25rem 0; color: var(--muted); font-size: 0.9rem">
+                OpenStax textbook
+                {#if materialNotes(m)}
+                  — {materialNotes(m)}
+                {/if}
+              </p>
+              <p style="margin: 0.25rem 0 0; font-size: 0.9rem">
+                {#if materialReadUrl(m)}
+                  <a href={materialReadUrl(m)} target="_blank" rel="noopener">Read online</a>
+                {/if}
+                {#if materialPdfUrl(m)}
+                  · <a href={materialPdfUrl(m)} target="_blank" rel="noopener">Download PDF</a>
+                {/if}
+              </p>
+            {:else if m.kind === "speak_note"}
+              {@const speak = parseSpeakNoteContent(m.content)}
+              <p style="margin: 0.25rem 0; color: var(--muted); font-size: 0.9rem; white-space: pre-wrap">
+                {speak?.body ?? m.content}
+              </p>
+              <button type="button" class="btn btn-secondary btn-sm" onclick={() => speakText(speak?.body ?? "")}>
+                Read aloud
+              </button>
+            {:else if m.kind === "handwriting"}
+              {@const ink = parseHandwritingContent(m.content)}
+              {#if ink?.preview_data_url}
+                <img src={ink.preview_data_url} alt="Handwritten notes" style="max-width:100%;margin-top:.35rem;border:1px solid var(--border);border-radius:6px" />
+              {/if}
+            {:else if m.kind === "link"}
+              <p style="margin: 0.25rem 0; font-size: 0.9rem">
+                <a href={m.content} target="_blank" rel="noopener">{m.content}</a>
+              </p>
+            {:else}
+              <p style="margin: 0.25rem 0; color: var(--muted); font-size: 0.9rem; white-space: pre-wrap">{m.content}</p>
+            {/if}
+            <AiLabPanel
+              aiLab={lecture.ai_lab}
+              compact
+              embed
+              studentMode
+              materialId={m.id}
+              labCompleted={lecture.lab_completed ?? false}
+              onLabComplete={loadCourse}
+            />
           </div>
         {:else}
           <p class="empty">No materials yet.</p>

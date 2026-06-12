@@ -107,7 +107,7 @@ impl HubRuntime {
                     .route("/api/student/forum", get(student_forum))
                     .route("/api/student/forum/post", post(student_forum_post))
                     .route("/api/student/quizzes", get(student_quizzes))
-                    .route("/api/student/quiz/:quiz_id", get(student_quiz_detail))
+                    .route("/api/student/quiz/{quiz_id}", get(student_quiz_detail))
                     .route("/api/student/quiz/submit", post(student_quiz_submit))
                     .route("/api/student/poll", get(student_poll))
                     .route("/api/student/poll/vote", post(student_poll_vote))
@@ -220,27 +220,20 @@ async fn student_materials(
     AxumState(state): AxumState<HubServerState>,
 ) -> Result<Json<Vec<StudentMaterialView>>, StatusCode> {
     let conn = state.db.lock().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let mut stmt = conn
-        .prepare(
-            "SELECT id, title, kind, content FROM course_materials
-             WHERE course_id = ?1 ORDER BY created_at ASC",
-        )
+    let lectures = crate::commands::materials::lectures_for_course(&conn, &state.course_id)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    let rows = stmt
-        .query_map(params![state.course_id], |row| {
-            Ok(StudentMaterialView {
-                id: row.get(0)?,
-                title: row.get(1)?,
-                kind: row.get(2)?,
-                content: row.get(3)?,
+    Ok(Json(
+        lectures
+            .into_iter()
+            .map(|entry| StudentMaterialView {
+                id: entry.material.id,
+                title: entry.material.title,
+                kind: entry.material.kind,
+                content: entry.material.content,
+                ai_lab: entry.ai_lab,
             })
-        })
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    Ok(Json(rows))
+            .collect(),
+    ))
 }
 
 async fn student_assignments(
@@ -874,11 +867,22 @@ const STUDENT_PORTAL_HTML: &str = r##"<!DOCTYPE html>
       const asgEl = document.getElementById('assignments');
       const forumEl = document.getElementById('forum');
       if (!materials.length) matEl.innerHTML = '<p>No materials yet.</p>';
-      else matEl.innerHTML = materials.map(m => `
-        <div class="item">
-          <div><span class="tag">${m.kind}</span> <strong>${m.title}</strong></div>
-          <p>${m.kind === 'link' ? `<a class="link" href="${m.content}" target="_blank">${m.content}</a>` : m.content}</p>
-        </div>`).join('');
+      else matEl.innerHTML = materials.map(m => {
+        let body = m.content;
+        if (m.kind === 'link') body = `<a class="link" href="${m.content}" target="_blank">${m.content}</a>`;
+        else if (m.kind === 'textbook') {
+          try {
+            const tb = JSON.parse(m.content);
+            const links = [];
+            if (tb.read_url) links.push(`<a class="link" href="${tb.read_url}" target="_blank">Read online</a>`);
+            if (tb.pdf_url) links.push(`<a class="link" href="${tb.pdf_url}" target="_blank">PDF</a>`);
+            body = (tb.notes ? `<p>${tb.notes}</p>` : '') + (links.length ? `<p>${links.join(' · ')}</p>` : '');
+          } catch (_) { body = m.content; }
+        }
+        const tag = m.kind === 'textbook' ? 'OpenStax' : m.kind;
+        const lab = m.ai_lab ? `<p style="margin-top:.5rem"><a class="link" href="${m.ai_lab.url}" target="_blank" style="font-weight:600">ARTIZAI ${m.ai_lab.lab.name}</a></p>` : '';
+        return `<div class="item"><div><span class="tag">${tag}</span> <strong>${m.title}</strong></div><p>${body}</p>${lab}</div>`;
+      }).join('');
       if (!assignments.length) asgEl.innerHTML = '<p>No assignments yet.</p>';
       else asgEl.innerHTML = assignments.map(a => `
         <div class="item">

@@ -23,6 +23,9 @@ const MIGRATIONS_V17: &str = include_str!("schema_v17.sql");
 const MIGRATIONS_V18: &str = include_str!("schema_v18.sql");
 const MIGRATIONS_V19: &str = include_str!("schema_v19.sql");
 const MIGRATIONS_V20: &str = include_str!("schema_v20.sql");
+const MIGRATIONS_V21: &str = include_str!("schema_v21.sql");
+const MIGRATIONS_V22: &str = include_str!("schema_v22.sql");
+const MIGRATIONS_V23: &str = include_str!("schema_v23.sql");
 
 pub fn init(path: &Path) -> rusqlite::Result<Connection> {
     let conn = Connection::open(path)?;
@@ -46,6 +49,9 @@ pub fn init(path: &Path) -> rusqlite::Result<Connection> {
     migrate_v18(&conn)?;
     migrate_v19(&conn)?;
     migrate_v20(&conn)?;
+    migrate_v21(&conn)?;
+    migrate_v22(&conn)?;
+    migrate_v23(&conn)?;
     seed_if_empty(&conn)?;
     Ok(conn)
 }
@@ -272,6 +278,44 @@ fn migrate_v20(conn: &Connection) -> rusqlite::Result<()> {
     if exists == 0 {
         conn.execute_batch(MIGRATIONS_V20)?;
     }
+    Ok(())
+}
+
+fn migrate_v21(conn: &Connection) -> rusqlite::Result<()> {
+    let exists: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='whatsapp_message_status_events'",
+        [],
+        |row| row.get(0),
+    )?;
+    if exists == 0 {
+        conn.execute_batch(MIGRATIONS_V21)?;
+    }
+    Ok(())
+}
+
+fn migrate_v22(conn: &Connection) -> rusqlite::Result<()> {
+    let sql: String = conn.query_row(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='course_materials'",
+        [],
+        |row| row.get(0),
+    )?;
+    if sql.contains("'textbook'") {
+        return Ok(());
+    }
+    conn.execute_batch(MIGRATIONS_V22)?;
+    Ok(())
+}
+
+fn migrate_v23(conn: &Connection) -> rusqlite::Result<()> {
+    let exists: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='note_capture_sessions'",
+        [],
+        |row| row.get(0),
+    )?;
+    if exists > 0 {
+        return Ok(());
+    }
+    conn.execute_batch(MIGRATIONS_V23)?;
     Ok(())
 }
 

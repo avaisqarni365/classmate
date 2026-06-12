@@ -1,13 +1,18 @@
 [package]
 name = "classmate"
-version = "0.26.0"
+version = "1.0.0"
 description = "ClassMate - local-first classroom platform"
 authors = ["ClassMate"]
 edition = "2021"
+default-run = "classmate"
 
 [lib]
 name = "classmate_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "classmate"
+path = "src/main.rs"
 
 [[bin]]
 name = "classmate-server"

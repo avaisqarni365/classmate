@@ -111,6 +111,81 @@ export interface CreateMaterialInput {
   content: string;
 }
 
+export interface OpenStaxBook {
+  slug: string;
+  title: string;
+  subjects: string[];
+  read_url: string;
+  pdf_url?: string | null;
+}
+
+export interface TextbookMaterialContent {
+  provider: string;
+  book_slug: string;
+  book_title: string;
+  subjects: string[];
+  read_url: string;
+  pdf_url?: string | null;
+  notes?: string;
+}
+
+export interface AiLabDefinition {
+  slug: string;
+  name: string;
+  description: string;
+  tools: string[];
+}
+
+export interface MaterialAiLab {
+  lab: AiLabDefinition;
+  url: string;
+  embed_url: string;
+  activities: string[];
+}
+
+export interface MaterialWithAiLab {
+  material: CourseMaterial;
+  ai_lab: MaterialAiLab;
+  lab_completed?: boolean;
+}
+
+export interface SpeakNoteContent {
+  body: string;
+  outline?: string;
+  transcript?: string;
+}
+
+export interface HandwritingContent {
+  ink_json: string;
+  preview_data_url?: string | null;
+  session_id?: string;
+}
+
+export interface CaptureSession {
+  id: string;
+  course_id: string;
+  created_by: string;
+  title: string;
+  ink_json: string;
+  preview_data_url?: string | null;
+  status: string;
+  material_id?: string | null;
+  expires_at: string;
+  updated_at: string;
+  created_at: string;
+  pad_url?: string | null;
+}
+
+export interface CreateCaptureSessionInput {
+  course_id: string;
+  title: string;
+}
+
+export interface ArtizAiConfig {
+  base_url: string;
+  labs: AiLabDefinition[];
+}
+
 export interface HubStatus {
   running: boolean;
   port: number;
@@ -787,6 +862,32 @@ export interface WhatsAppOutboundMessage {
   sent_at?: string | null;
   delivered_at?: string | null;
   read_at?: string | null;
+}
+
+export interface WhatsAppBroadcastSummary {
+  batch_key: string;
+  broadcast_batch_id?: string | null;
+  group_id: string;
+  kind: string;
+  ref_id?: string | null;
+  started_at: string;
+  last_update_at: string;
+  total: number;
+  pending: number;
+  sent: number;
+  delivered: number;
+  read: number;
+  failed: number;
+}
+
+export interface WhatsAppMessageStatusEvent {
+  id: string;
+  outbound_id?: string | null;
+  wa_message_id: string;
+  group_id?: string | null;
+  status: string;
+  event_at: string;
+  received_at: string;
 }
 
 export interface WhatsAppTemplateSettings {

@@ -4,14 +4,58 @@ Local-first online and desktop classroom platform built with **Tauri 2**, **Svel
 
 MIT licensed — safe for commercial use.
 
-## Features (v0.26)
+## Features (v1.0)
 
-- Everything in v0.25, plus:
-- **Public domain URLs** — configure HTTPS base URL for Class Hub join links and WhatsApp webhooks
-- **Release build** — Windows NSIS installer via `npm run tauri:build`
-- **Deployment guide** — [DEPLOY.md](./DEPLOY.md) for reverse proxy + domain setup
+- **Fully responsive UI** — mobile drawer nav (desktop app), stacked layouts, mobile gradebook cards (web portal), responsive ARTIZAI embeds
+- Everything in v0.33 — teacher web lecture notes, speak notes, tablet handwriting, ARTIZAI labs, OpenStax integration
 
-### Platform
+## Features (v0.33)
+
+- Everything in v0.32, plus:
+- **Teacher web portal — lecture notes** — speak notes (STT/TTS) and tablet handwriting from the browser
+- **Bug fixes** — TypeScript/speech API types, hub quiz route, WhatsApp settings types, Svelte 5 layout
+
+## Features (v0.32)
+
+- Everything in v0.31, plus:
+- **Speak notes** — speech-to-text dictation and text-to-speech read-aloud (Web Speech API in Chrome/Edge)
+- **Tablet handwriting pad** — QR/link opens `/notes/pad` on Android/iOS; Apple Pencil/stylus ink syncs back as lecture notes
+- **Embedded ARTIZAI labs** — optional iframe embed on student views
+- **Lab completion tracking** — students mark AI lab complete; status shown in portal and My Courses
+
+## Features (v0.31)
+
+- Everything in v0.30, plus:
+- **ARTIZAI AI Lab on every lecture note** — auto-matched lab (Science, Maths, Arts, etc.) with link to [artizai.uk](https://artizai.uk)
+- **OpenStax + AI together** — textbook read/PDF links plus AI lab activities on desktop, Class Hub, and web portal
+- **Configurable ARTIZAI base URL** in Settings
+
+## Features (v0.30)
+
+- Everything in v0.29, plus:
+- **OpenStax textbook library** — browse 60+ free peer-reviewed school/college books and attach them to courses as lecture notes
+- **Student read links** — materials show OpenStax online reader and PDF links in My Courses and Class Hub
+
+## Features (v0.29)
+
+- Everything in v0.28, plus:
+- **Admin web console** — dashboard stats, create users/courses, manage enrollments, public URL settings
+- **Admin gradebook & announcements** — same teacher tools, scoped to all school courses
+
+## Features (v0.28)
+
+- Everything in v0.27, plus:
+- **Teacher web portal** — sign in as teacher/admin, view gradebook, save scores, post announcements
+- **Course-scoped access** — teachers see their courses; admins see all courses in the school
+
+## Features (v0.27)
+
+- Everything in v0.26, plus:
+- **Web landing** — Codes AI ecosystem intro at [cm.codes-ai.uk](https://cm.codes-ai.uk)
+- **Student / parent web portal** — sign in on the web, view courses and grades
+- **Broadcast delivery summary** — aggregated sent/delivered/read counts from WhatsApp status webhooks
+
+### Platform (v0.26 and earlier)
 
 - Desktop admin with **login**, dashboard, users, courses, gradebook, class hub
 - Embedded **SQLite** database (offline, no cloud required)

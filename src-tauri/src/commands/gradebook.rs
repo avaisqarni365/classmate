@@ -60,7 +60,7 @@ pub fn get_gradebook(state: State<'_, AppState>, course_id: String) -> Result<Gr
     build_gradebook(&conn, course_id)
 }
 
-fn build_gradebook(conn: &rusqlite::Connection, course_id: String) -> Result<Gradebook, String> {
+pub fn build_gradebook(conn: &rusqlite::Connection, course_id: String) -> Result<Gradebook, String> {
     let course_title: String = conn
         .query_row(
             "SELECT title FROM courses WHERE id = ?1",
@@ -153,8 +153,12 @@ fn build_gradebook(conn: &rusqlite::Connection, course_id: String) -> Result<Gra
 
 #[tauri::command]
 pub fn save_grade(state: State<'_, AppState>, input: SaveGradeInput) -> Result<(), String> {
-    let now = Utc::now().to_rfc3339();
     let conn = state.db.lock().map_err(|e| e.to_string())?;
+    save_grade_work(&conn, &input)
+}
+
+pub fn save_grade_work(conn: &rusqlite::Connection, input: &SaveGradeInput) -> Result<(), String> {
+    let now = Utc::now().to_rfc3339();
 
     let existing: Option<String> = conn
         .query_row(

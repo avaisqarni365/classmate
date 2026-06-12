@@ -13,6 +13,12 @@ import type {
   CreateForumTopicInput,
   CreateLtiToolInput,
   CreateMaterialInput,
+  CaptureSession,
+  CreateCaptureSessionInput,
+  MaterialAiLab,
+  MaterialWithAiLab,
+  OpenStaxBook,
+  ArtizAiConfig,
   CreateUserInput,
   CreateQuizInput,
   CreateQuizQuestionInput,
@@ -69,6 +75,8 @@ import type {
   SendWhatsAppBroadcastInput,
   WhatsAppBroadcastResult,
   WhatsAppOutboundMessage,
+  WhatsAppBroadcastSummary,
+  WhatsAppMessageStatusEvent,
   WhatsAppTemplateSettings,
   SaveWhatsAppTemplateSettingsInput,
   SendWhatsAppTemplateBroadcastInput,
@@ -167,6 +175,38 @@ export const api = {
     invoke<CourseMaterial>("create_material", { input }),
   deleteMaterial: (materialId: string) =>
     invoke<void>("delete_material", { materialId }),
+  listOpenStaxBooks: (subject?: string) =>
+    invoke<OpenStaxBook[]>("list_openstax_books", { subject: subject ?? null }),
+  listCourseLectures: (courseId: string) =>
+    invoke<MaterialWithAiLab[]>("list_course_lectures", { courseId }),
+  createCaptureSession: (input: CreateCaptureSessionInput) =>
+    invoke<CaptureSession>("create_capture_session", { input }),
+  getCaptureSession: (sessionId: string) =>
+    invoke<CaptureSession>("get_capture_session", { sessionId }),
+  attachCaptureSession: (sessionId: string, title?: string) =>
+    invoke<CourseMaterial>("attach_capture_session", {
+      sessionId,
+      title: title ?? null,
+    }),
+  markMaterialLabComplete: (materialId: string) =>
+    invoke<{ material_id: string; completed_at: string }>("mark_material_lab_complete", {
+      materialId,
+    }),
+  getArtizAiConfig: () => invoke<ArtizAiConfig>("get_artizai_config"),
+  saveArtizAiBaseUrl: (baseUrl: string) =>
+    invoke<ArtizAiConfig>("save_artizai_base_url", { baseUrl }),
+  resolveMaterialAiLab: (
+    courseCode: string,
+    courseTitle: string,
+    materialTitle: string,
+    subjects?: string[],
+  ) =>
+    invoke<MaterialAiLab>("resolve_material_ai_lab", {
+      courseCode,
+      courseTitle,
+      materialTitle,
+      subjects: subjects ?? null,
+    }),
   listAnnouncements: (courseId?: string) =>
     invoke<Announcement[]>("list_announcements", { courseId: courseId ?? null }),
   createAnnouncement: (input: CreateAnnouncementInput) =>
@@ -339,6 +379,17 @@ export const api = {
   listWhatsAppOutboundMessages: (groupId?: string, limit?: number) =>
     invoke<WhatsAppOutboundMessage[]>("list_whatsapp_outbound_messages", {
       groupId: groupId ?? null,
+      limit: limit ?? null,
+    }),
+  listWhatsAppBroadcastSummaries: (groupId: string, limit?: number) =>
+    invoke<WhatsAppBroadcastSummary[]>("list_whatsapp_broadcast_summaries", {
+      groupId,
+      limit: limit ?? null,
+    }),
+  listWhatsAppMessageStatusEvents: (groupId: string, batchKey?: string, limit?: number) =>
+    invoke<WhatsAppMessageStatusEvent[]>("list_whatsapp_message_status_events", {
+      groupId,
+      batchKey: batchKey ?? null,
       limit: limit ?? null,
     }),
   getWhatsAppTemplateSettings: () =>

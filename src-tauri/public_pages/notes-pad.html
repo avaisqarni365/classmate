@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ClassMate Handwriting Pad</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#0f172a; --panel:#1e293b; --ink:#f8fafc; --accent:#38bdf8; --border:#334155; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--ink); min-height:100dvh; display:flex; flex-direction:column; touch-action:none; }
+    header { padding:.65rem .85rem; background:var(--panel); border-bottom:1px solid var(--border); display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    header strong { font-size:1rem; }
+    .status { font-size:.82rem; opacity:.85; }
+    .toolbar { display:flex; gap:.35rem; flex-wrap:wrap; margin-left:auto; }
+    button, select { border:1px solid var(--border); background:#334155; color:var(--ink); border-radius:8px; padding:.45rem .7rem; font-size:.9rem; }
+    button.primary { background:var(--accent); color:#0f172a; border-color:transparent; font-weight:600; }
+    main { flex:1; position:relative; }
+    canvas { display:block; width:100%; height:100%; background:#fff; cursor: crosshair; touch-action:none; }
+    .error { color:#fca5a5; padding:.75rem; }
+    .muted { opacity:.75; font-size:.85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <strong id="title">Handwriting pad</strong>
+      <div class="status" id="status">Loading session…</div>
+    </div>
+    <div class="toolbar">
+      <select id="color">
+        <option value="#111827">Black</option>
+        <option value="#2563eb">Blue</option>
+        <option value="#dc2626">Red</option>
+        <option value="#16a34a">Green</option>
+      </select>
+      <select id="width">
+        <option value="2">Fine</option>
+        <option value="4" selected>Medium</option>
+        <option value="8">Bold</option>
+      </select>
+      <button type="button" id="undo">Undo</button>
+      <button type="button" id="clear">Clear</button>
+      <button type="button" class="primary" id="sync">Sync now</button>
+    </div>
+  </header>
+  <main id="main"><canvas id="canvas"></canvas></main>
+  <p id="err" class="error" hidden></p>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get('session');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const statusEl = document.getElementById('status');
+    const titleEl = document.getElementById('title');
+    const errEl = document.getElementById('err');
+    let strokes = [];
+    let current = null;
+    let syncing = false;
+    let syncTimer = null;
+
+    function showError(msg) {
+      errEl.hidden = false;
+      errEl.textContent = msg;
+      statusEl.textContent = 'Error';
+    }
+
+    if (!sessionId) {
+      showError('Missing session id. Open this page from ClassMate.');
+    }
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      redraw();
+    }
+
+    function redraw() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      for (const stroke of strokes) drawStroke(stroke);
+      if (current) drawStroke(current);
+    }
+
+    function drawStroke(stroke) {
+      const pts = stroke.points || [];
+      if (pts.length < 2) return;
+      ctx.strokeStyle = stroke.color || '#111827';
+      ctx.lineWidth = stroke.width || 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+    }
+
+    function pointFromEvent(e) {
+      const rect = canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top, t: Date.now() };
+    }
+
+    function startStroke(e) {
+      if (e.pointerType === 'mouse' && e.buttons !== 1) return;
+      canvas.setPointerCapture(e.pointerId);
+      current = {
+        color: document.getElementById('color').value,
+        width: Number(document.getElementById('width').value),
+        points: [pointFromEvent(e)]
+      };
+      e.preventDefault();
+    }
+
+    function moveStroke(e) {
+      if (!current) return;
+      current.points.push(pointFromEvent(e));
+      redraw();
+      e.preventDefault();
+    }
+
+    function endStroke(e) {
+      if (!current) return;
+      strokes.push(current);
+      current = null;
+      redraw();
+      scheduleSync();
+      e.preventDefault();
+    }
+
+    canvas.addEventListener('pointerdown', startStroke);
+    canvas.addEventListener('pointermove', moveStroke);
+    canvas.addEventListener('pointerup', endStroke);
+    canvas.addEventListener('pointercancel', endStroke);
+    window.addEventListener('resize', resize);
+
+    document.getElementById('undo').onclick = () => { strokes.pop(); redraw(); scheduleSync(); };
+    document.getElementById('clear').onclick = () => { strokes = []; redraw(); scheduleSync(); };
+    document.getElementById('sync').onclick = () => syncInk(true);
+
+    async function loadSession() {
+      const res = await fetch('/api/web/capture/' + encodeURIComponent(sessionId));
+      if (!res.ok) throw new Error('Session not found or expired');
+      const data = await res.json();
+      titleEl.textContent = data.title || 'Handwriting pad';
+      statusEl.textContent = 'Connected · write with pencil or finger';
+      try {
+        const parsed = JSON.parse(data.ink_json || '[]');
+        if (Array.isArray(parsed)) strokes = parsed;
+      } catch (_) { strokes = []; }
+      redraw();
+      syncTimer = setInterval(() => syncInk(false), 5000);
+    }
+
+    function scheduleSync() {
+      clearTimeout(window._syncDebounce);
+      window._syncDebounce = setTimeout(() => syncInk(false), 800);
+    }
+
+    async function syncInk(manual) {
+      if (syncing || !sessionId) return;
+      syncing = true;
+      if (manual) statusEl.textContent = 'Syncing…';
+      try {
+        const preview = canvas.toDataURL('image/png');
+        const res = await fetch('/api/web/capture/' + encodeURIComponent(sessionId), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId, ink_json: JSON.stringify(strokes), preview_data_url: preview })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Sync failed');
+        }
+        statusEl.textContent = 'Synced ' + new Date().toLocaleTimeString();
+      } catch (e) {
+        statusEl.textContent = e.message || 'Sync failed';
+      } finally {
+        syncing = false;
+      }
+    }
+
+    resize();
+    loadSession().catch(e => showError(e.message));
+  </script>
+</body>
+</html>

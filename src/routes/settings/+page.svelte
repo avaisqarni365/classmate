@@ -35,6 +35,7 @@
     PushLogEntry,
 
     VideoStatus,
+    WhatsAppBusinessSettings,
 
   } from "$lib/types";
 
@@ -55,6 +56,7 @@
   let publicBaseUrl = $state("");
 
   let publicHubPath = $state("/hub");
+  let artizaiBaseUrl = $state("https://artizai.uk");
 
   let ltiTools = $state<LtiTool[]>([]);
 
@@ -70,7 +72,7 @@
   let waPhoneNumberId = $state("");
   let waAccessToken = $state("");
   let waWebhookToken = $state("");
-  let waBusiness = $state<{ configured: boolean; webhook_url?: string | null } | null>(null);
+  let waBusiness = $state<WhatsAppBusinessSettings | null>(null);
   let waTemplateName = $state("");
   let waTemplateLanguage = $state("en");
   let waGroupInviteTemplateName = $state("");
@@ -239,6 +241,8 @@
     publicBaseUrl = (await api.getSetting("public_base_url")) ?? "";
 
     publicHubPath = (await api.getSetting("public_hub_path")) ?? "/hub";
+
+    artizaiBaseUrl = (await api.getArtizAiConfig()).base_url;
 
     autoBackup = await api.getAutoBackupStatus();
 
@@ -832,6 +836,16 @@
 
 
 
+  async function saveArtizAiSettings() {
+    error = "";
+    try {
+      await api.saveArtizAiBaseUrl(artizaiBaseUrl.trim());
+      message = "ARTIZAI settings saved.";
+    } catch (e) {
+      error = e instanceof Error ? e.message : "Failed to save ARTIZAI settings";
+    }
+  }
+
   async function savePublicUrlSettings() {
 
     error = "";
@@ -1334,6 +1348,21 @@
 
         {t("settings.sync.publicSave")}
 
+      </button>
+
+      <h4 style="margin:1.25rem 0 .35rem;font-size:.95rem">ARTIZAI Academy</h4>
+
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:.75rem">
+        Base URL for AI Lab links on lecture notes. Default: https://artizai.uk
+      </p>
+
+      <label style="display:block">
+        ARTIZAI base URL
+        <input bind:value={artizaiBaseUrl} placeholder="https://artizai.uk" />
+      </label>
+
+      <button class="btn btn-secondary btn-sm" type="button" style="margin-top:.75rem" onclick={saveArtizAiSettings}>
+        Save ARTIZAI URL
       </button>
 
       <label style="display:block;margin-top:.75rem">

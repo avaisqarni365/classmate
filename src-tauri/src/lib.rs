@@ -5,6 +5,7 @@ mod hub;
 mod models;
 mod sync_server;
 mod video;
+mod web_portal;
 
 use hub::HubRuntime;
 use models::User;
@@ -80,6 +81,18 @@ pub fn run() {
             commands::materials::list_materials,
             commands::materials::create_material,
             commands::materials::delete_material,
+            commands::openstax::list_openstax_books,
+            commands::ai_lab::list_ai_labs,
+            commands::ai_lab::get_artizai_config,
+            commands::ai_lab::save_artizai_base_url,
+            commands::ai_lab::resolve_material_ai_lab,
+            commands::materials::list_course_lectures,
+            commands::notes::create_capture_session,
+            commands::notes::get_capture_session,
+            commands::notes::update_capture_ink,
+            commands::notes::attach_capture_session,
+            commands::notes::get_capture_pad_url,
+            commands::notes::mark_material_lab_complete,
             commands::announcements::list_announcements,
             commands::announcements::create_announcement,
             commands::announcements::delete_announcement,
@@ -193,6 +206,8 @@ pub fn run() {
             commands::whatsapp_api::set_whatsapp_consent,
             commands::whatsapp_api::send_whatsapp_broadcast,
             commands::whatsapp_api::list_whatsapp_outbound_messages,
+            commands::whatsapp_api::list_whatsapp_broadcast_summaries,
+            commands::whatsapp_api::list_whatsapp_message_status_events,
             commands::whatsapp_api::get_whatsapp_template_settings,
             commands::whatsapp_api::save_whatsapp_template_settings,
             commands::whatsapp_api::preview_whatsapp_assignment_template,

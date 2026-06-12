@@ -294,6 +294,75 @@ pub struct CreateMaterialInput {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpenStaxBook {
+    pub slug: String,
+    pub title: String,
+    pub subjects: Vec<String>,
+    pub read_url: String,
+    pub pdf_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AiLabDefinition {
+    pub slug: String,
+    pub name: String,
+    pub description: String,
+    pub tools: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MaterialAiLab {
+    pub lab: AiLabDefinition,
+    pub url: String,
+    pub embed_url: String,
+    pub activities: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MaterialWithAiLab {
+    pub material: CourseMaterial,
+    pub ai_lab: MaterialAiLab,
+    #[serde(default)]
+    pub lab_completed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CaptureSession {
+    pub id: String,
+    pub course_id: String,
+    pub created_by: String,
+    pub title: String,
+    pub ink_json: String,
+    pub preview_data_url: Option<String>,
+    pub status: String,
+    pub material_id: Option<String>,
+    pub expires_at: String,
+    pub updated_at: String,
+    pub created_at: String,
+    pub pad_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateCaptureSessionInput {
+    pub course_id: String,
+    pub title: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateCaptureInkInput {
+    pub session_id: String,
+    pub ink_json: String,
+    pub preview_data_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MaterialLabCompletion {
+    pub material_id: String,
+    pub student_id: String,
+    pub completed_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HubStatus {
     pub running: bool,
     pub port: u16,
@@ -335,6 +404,7 @@ pub struct StudentMaterialView {
     pub title: String,
     pub kind: String,
     pub content: String,
+    pub ai_lab: MaterialAiLab,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -534,6 +604,8 @@ pub struct BackupPayload {
     pub push_devices: Vec<serde_json::Value>,
     #[serde(default)]
     pub push_log: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub whatsapp_message_status_events: Vec<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1530,6 +1602,34 @@ pub struct WhatsAppGroupSettingsEvent {
     pub setting_value: Option<String>,
     pub update_successful: Option<bool>,
     pub error_summary: Option<String>,
+    pub received_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WhatsAppBroadcastSummary {
+    pub batch_key: String,
+    pub broadcast_batch_id: Option<String>,
+    pub group_id: String,
+    pub kind: String,
+    pub ref_id: Option<String>,
+    pub started_at: String,
+    pub last_update_at: String,
+    pub total: i64,
+    pub pending: i64,
+    pub sent: i64,
+    pub delivered: i64,
+    pub read: i64,
+    pub failed: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WhatsAppMessageStatusEvent {
+    pub id: String,
+    pub outbound_id: Option<String>,
+    pub wa_message_id: String,
+    pub group_id: Option<String>,
+    pub status: String,
+    pub event_at: String,
     pub received_at: String,
 }
 

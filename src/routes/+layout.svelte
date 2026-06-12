@@ -10,10 +10,12 @@
   import type { User } from "$lib/types";
   import type { TenancyContext, UiPreferences } from "$lib/types";
 
+  let { children } = $props();
   let user = $state<User | null>(null);
   let prefs = $state<UiPreferences | null>(null);
   let tenancyCtx = $state<TenancyContext | null>(null);
   let ready = $state(false);
+  let navOpen = $state(false);
 
   const allLinks = [
     { href: "/", labelKey: "dashboard" as const, roles: ["admin", "teacher", "student", "parent"] },
@@ -71,7 +73,13 @@
     }
   });
 
+  $effect(() => {
+    $page.url.pathname;
+    navOpen = false;
+  });
+
   async function signOut() {
+    navOpen = false;
     await auth.logout();
     goto("/login");
   }
@@ -86,7 +94,19 @@
 {#if !ready}
   <div class="boot">{t("loading")}</div>
 {:else if user}
-  <div class="app-shell">
+  <div class="app-shell" class:nav-open={navOpen}>
+    <button
+      type="button"
+      class="mobile-menu-btn"
+      aria-label={navOpen ? "Close menu" : "Open menu"}
+      aria-expanded={navOpen}
+      onclick={() => (navOpen = !navOpen)}
+    >
+      {navOpen ? "✕" : "☰"}
+    </button>
+    {#if navOpen}
+      <button type="button" class="nav-overlay" aria-label="Close menu" onclick={() => (navOpen = false)}></button>
+    {/if}
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">CM</div>
@@ -119,11 +139,11 @@
       <button class="btn btn-secondary sign-out" onclick={signOut}>{t("signOut")}</button>
     </aside>
     <main class="content">
-      <slot />
+      {@render children()}
     </main>
   </div>
 {:else}
-  <slot />
+  {@render children()}
 {/if}
 
 <style>

@@ -87,7 +87,7 @@
     </label>
     <form class="form-grid" style="margin-top:1rem" onsubmit={createTopic}>
       <label>Topic title<input bind:value={topicTitle} required /></label>
-      <label>First post<textarea bind:value={topicBody} rows="3" required /></label>
+      <label>First post<textarea bind:value={topicBody} rows="3" required></textarea></label>
       <button class="btn btn-primary" type="submit">Create topic</button>
     </form>
     <ul style="list-style:none;padding:0;margin-top:1rem">
@@ -112,7 +112,7 @@
         </div>
       {/each}
       <form class="form-grid" style="margin-top:1rem" onsubmit={reply}>
-        <label>Reply<textarea bind:value={replyBody} rows="2" required /></label>
+        <label>Reply<textarea bind:value={replyBody} rows="2" required></textarea></label>
         <button class="btn btn-primary" type="submit">Post reply</button>
       </form>
     {/if}

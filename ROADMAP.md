@@ -24,10 +24,18 @@
 | v0.24 | Group participant webhooks + cached roster refresh |
 | v0.25 | Group settings & status webhooks |
 | v0.26 | Public domain URLs + Windows release build |
+| v0.27 | Web landing + student/parent portal; WhatsApp broadcast delivery aggregates |
+| v0.28 | Teacher web tools — gradebook and announcements in browser |
+| v0.29 | Admin web console — users, courses, enrollments, settings, gradebook |
+| v0.30 | OpenStax textbook integration — attach free college/K12 books as lecture notes |
+| v0.31 | ARTIZAI AI Lab on every lecture note — seven labs linked from all materials |
+| v0.32 | Speak notes (STT/TTS), tablet handwriting pad, embedded labs, lab completion tracking |
+| v0.33 | Teacher web lecture notes + fix-all (types, hub route, portal STT/handwriting) |
+| v1.0 | Fully responsive web + desktop UI — mobile nav, gradebook cards, final release |
 
-## Queued — WhatsApp (Phase 3+)
+## Queued — Web (Phase 4+)
 
-1. **Group message status webhooks** — aggregate delivered/read receipts for group broadcasts
+1. **Extended admin on web** — WhatsApp, fees, quizzes, backup, full desktop parity via HTTP API
 
 ## How to contribute
 

@@ -11,6 +11,13 @@ pub fn list_announcements(
     course_id: Option<String>,
 ) -> Result<Vec<Announcement>, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
+    list_announcements_for_course(&conn, course_id.as_deref())
+}
+
+pub fn list_announcements_for_course(
+    conn: &rusqlite::Connection,
+    course_id: Option<&str>,
+) -> Result<Vec<Announcement>, String> {
     let mut sql = String::from(
         "SELECT id, course_id, title, body, author_id, created_at FROM announcements",
     );
@@ -20,7 +27,7 @@ pub fn list_announcements(
     sql.push_str(" ORDER BY created_at DESC LIMIT 100");
 
     let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
-    let rows = if let Some(ref cid) = course_id {
+    let rows = if let Some(cid) = course_id {
         stmt.query_map(params![cid], map_row)
     } else {
         stmt.query_map([], map_row)
@@ -48,16 +55,27 @@ pub fn create_announcement(
     state: State<'_, AppState>,
     input: CreateAnnouncementInput,
 ) -> Result<Announcement, String> {
-    let now = Utc::now().to_rfc3339();
-    let id = Uuid::new_v4().to_string();
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
     let author_id = state
         .session
         .lock()
         .map_err(|e| e.to_string())?
         .as_ref()
         .map(|u| u.id.clone());
+    create_announcement_work(&conn, &input, author_id.as_deref())
+}
 
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
+pub fn create_announcement_work(
+    conn: &rusqlite::Connection,
+    input: &CreateAnnouncementInput,
+    author_id: Option<&str>,
+) -> Result<Announcement, String> {
+    if input.title.trim().is_empty() {
+        return Err("Title is required".into());
+    }
+    let now = Utc::now().to_rfc3339();
+    let id = Uuid::new_v4().to_string();
+
     conn.execute(
         "INSERT INTO announcements (id, course_id, title, body, author_id, created_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
@@ -74,10 +92,10 @@ pub fn create_announcement(
 
     Ok(Announcement {
         id,
-        course_id: input.course_id,
+        course_id: input.course_id.clone(),
         title: input.title.trim().to_string(),
         body: input.body.trim().to_string(),
-        author_id,
+        author_id: author_id.map(str::to_string),
         created_at: now,
     })
 }

@@ -6,13 +6,13 @@ use crate::models::{
     SaveWhatsAppComplianceSettingsInput, SaveWhatsAppInboundRoutingSettingsInput,
     SaveWhatsAppTemplateSettingsInput, SendWhatsAppBroadcastInput,
     SendWhatsAppGroupInvitesInput, SendWhatsAppTemplateBroadcastInput, WhatsAppBroadcastResult,
-    WhatsAppBusinessSettings, WhatsAppComplianceSettings, WhatsAppConnectionTest,
+    WhatsAppBroadcastSummary, WhatsAppBusinessSettings, WhatsAppComplianceSettings, WhatsAppConnectionTest,
     WhatsAppConsentLogEntry, WhatsAppConsentSnapshot, WhatsAppGdprExport, WhatsAppGroupLink,
     WhatsAppGroupRosterDiff, WhatsAppInboundMessage, WhatsAppInboundRoutingSettings,
     WhatsAppJoinRequest, WhatsAppNativeParticipant, WhatsAppOutboundMessage, WhatsAppRosterMember,
     ManageWhatsAppJoinRequestsInput, SyncNativeWhatsAppGroupRosterInput,
     SyncNativeWhatsAppGroupRosterResult, WhatsAppGroupParticipantEvent, WhatsAppGroupSettingsEvent,
-    WhatsAppScheduledBroadcast, WhatsAppScheduledRunResult, WhatsAppShareInput,
+    WhatsAppMessageStatusEvent, WhatsAppScheduledBroadcast, WhatsAppScheduledRunResult, WhatsAppShareInput,
     WhatsAppTemplatePreview, WhatsAppTemplateSettings,
 };
 use crate::AppState;
@@ -512,6 +512,7 @@ fn execute_template_broadcast(
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
 
+    let batch_id = Uuid::new_v4().to_string();
     let template_name = template_settings.assignment_name.clone();
     let language = template_settings.assignment_language.clone();
     let mut sent = 0i64;
@@ -549,8 +550,8 @@ fn execute_template_broadcast(
         let now = Utc::now().to_rfc3339();
         conn.execute(
             "INSERT INTO whatsapp_outbound_messages
-             (id, group_id, user_id, kind, ref_id, phone, body, status, created_at)
-             VALUES (?1, ?2, ?3, 'template_assignment', ?4, ?5, ?6, 'pending', ?7)",
+             (id, group_id, user_id, kind, ref_id, phone, body, status, created_at, broadcast_batch_id)
+             VALUES (?1, ?2, ?3, 'template_assignment', ?4, ?5, ?6, 'pending', ?7, ?8)",
             params![
                 msg_id,
                 input.group_id,
@@ -558,7 +559,8 @@ fn execute_template_broadcast(
                 input.assignment_id,
                 normalized,
                 body,
-                now
+                now,
+                batch_id
             ],
         )
         .map_err(|e| e.to_string())?;
@@ -919,6 +921,7 @@ pub fn send_whatsapp_group_invites(
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
 
+    let batch_id = Uuid::new_v4().to_string();
     let template_name = template_settings.group_invite_name.clone();
     let language = template_settings.group_invite_language.clone();
     let mut sent = 0i64;
@@ -946,8 +949,8 @@ pub fn send_whatsapp_group_invites(
         let now = Utc::now().to_rfc3339();
         conn.execute(
             "INSERT INTO whatsapp_outbound_messages
-             (id, group_id, user_id, kind, ref_id, phone, body, status, created_at)
-             VALUES (?1, ?2, ?3, 'template_group_invite', ?4, ?5, ?6, 'pending', ?7)",
+             (id, group_id, user_id, kind, ref_id, phone, body, status, created_at, broadcast_batch_id)
+             VALUES (?1, ?2, ?3, 'template_group_invite', ?4, ?5, ?6, 'pending', ?7, ?8)",
             params![
                 msg_id,
                 input.group_id,
@@ -955,7 +958,8 @@ pub fn send_whatsapp_group_invites(
                 external_group_id,
                 normalized,
                 body,
-                now
+                now,
+                batch_id
             ],
         )
         .map_err(|e| e.to_string())?;
@@ -1456,6 +1460,7 @@ fn send_group_invites_for_users(
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
 
+    let batch_id = Uuid::new_v4().to_string();
     let template_name = template_settings.group_invite_name.clone();
     let language = template_settings.group_invite_language.clone();
     let mut sent = 0i64;
@@ -1486,8 +1491,8 @@ fn send_group_invites_for_users(
         let now = Utc::now().to_rfc3339();
         conn.execute(
             "INSERT INTO whatsapp_outbound_messages
-             (id, group_id, user_id, kind, ref_id, phone, body, status, created_at)
-             VALUES (?1, ?2, ?3, 'template_group_invite', ?4, ?5, ?6, 'pending', ?7)",
+             (id, group_id, user_id, kind, ref_id, phone, body, status, created_at, broadcast_batch_id)
+             VALUES (?1, ?2, ?3, 'template_group_invite', ?4, ?5, ?6, 'pending', ?7, ?8)",
             params![
                 msg_id,
                 group_id,
@@ -1495,7 +1500,8 @@ fn send_group_invites_for_users(
                 external_group_id,
                 normalized,
                 body,
-                now
+                now,
+                batch_id
             ],
         )
         .map_err(|e| e.to_string())?;
@@ -2095,6 +2101,7 @@ fn execute_text_broadcast(
         .or_else(|| input.announcement_id.clone())
         .or_else(|| input.custom_message.clone().map(|_| input.group_id.clone()));
 
+    let batch_id = Uuid::new_v4().to_string();
     let mut sent = 0i64;
     let mut failed = 0i64;
     let mut skipped = 0i64;
@@ -2119,8 +2126,8 @@ fn execute_text_broadcast(
         let now = Utc::now().to_rfc3339();
         conn.execute(
             "INSERT INTO whatsapp_outbound_messages
-             (id, group_id, user_id, kind, ref_id, phone, body, status, created_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', ?8)",
+             (id, group_id, user_id, kind, ref_id, phone, body, status, created_at, broadcast_batch_id)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'pending', ?8, ?9)",
             params![
                 msg_id,
                 input.group_id,
@@ -2129,7 +2136,8 @@ fn execute_text_broadcast(
                 ref_id,
                 normalized,
                 message,
-                now
+                now,
+                batch_id
             ],
         )
         .map_err(|e| e.to_string())?;
@@ -2230,6 +2238,114 @@ pub fn list_whatsapp_outbound_messages(
     };
 
     Ok(messages)
+}
+
+#[tauri::command]
+pub fn list_whatsapp_broadcast_summaries(
+    state: State<'_, AppState>,
+    group_id: String,
+    limit: Option<i64>,
+) -> Result<Vec<WhatsAppBroadcastSummary>, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    let max = limit.unwrap_or(20).clamp(1, 100);
+    let mut stmt = conn
+        .prepare(
+            "SELECT
+                COALESCE(m.broadcast_batch_id, m.kind || ':' || COALESCE(m.ref_id, '') || ':' || substr(m.created_at, 1, 16)) AS batch_key,
+                m.broadcast_batch_id,
+                m.group_id,
+                m.kind,
+                m.ref_id,
+                MIN(m.created_at) AS started_at,
+                MAX(COALESCE(m.read_at, m.delivered_at, m.sent_at, m.created_at)) AS last_update_at,
+                COUNT(*) AS total,
+                SUM(CASE WHEN m.status = 'pending' THEN 1 ELSE 0 END) AS pending,
+                SUM(CASE WHEN m.status = 'sent' AND m.delivered_at IS NULL AND m.read_at IS NULL THEN 1 ELSE 0 END) AS sent,
+                SUM(CASE WHEN m.delivered_at IS NOT NULL AND m.read_at IS NULL THEN 1 ELSE 0 END) AS delivered,
+                SUM(CASE WHEN m.read_at IS NOT NULL THEN 1 ELSE 0 END) AS read_count,
+                SUM(CASE WHEN m.status = 'failed' THEN 1 ELSE 0 END) AS failed
+             FROM whatsapp_outbound_messages m
+             WHERE m.group_id = ?1
+             GROUP BY batch_key
+             ORDER BY started_at DESC
+             LIMIT ?2",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(params![group_id, max], |row| {
+            Ok(WhatsAppBroadcastSummary {
+                batch_key: row.get(0)?,
+                broadcast_batch_id: row.get(1)?,
+                group_id: row.get(2)?,
+                kind: row.get(3)?,
+                ref_id: row.get(4)?,
+                started_at: row.get(5)?,
+                last_update_at: row.get(6)?,
+                total: row.get(7)?,
+                pending: row.get(8)?,
+                sent: row.get(9)?,
+                delivered: row.get(10)?,
+                read: row.get(11)?,
+                failed: row.get(12)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn list_whatsapp_message_status_events(
+    state: State<'_, AppState>,
+    group_id: String,
+    batch_key: Option<String>,
+    limit: Option<i64>,
+) -> Result<Vec<WhatsAppMessageStatusEvent>, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    let max = limit.unwrap_or(50).clamp(1, 200);
+    let sql = if batch_key.as_ref().is_some_and(|s| !s.is_empty()) {
+        "SELECT e.id, e.outbound_id, e.wa_message_id, e.group_id, e.status, e.event_at, e.received_at
+         FROM whatsapp_message_status_events e
+         JOIN whatsapp_outbound_messages m ON m.id = e.outbound_id
+         WHERE e.group_id = ?1
+           AND COALESCE(m.broadcast_batch_id, m.kind || ':' || COALESCE(m.ref_id, '') || ':' || substr(m.created_at, 1, 16)) = ?2
+         ORDER BY e.received_at DESC
+         LIMIT ?3"
+    } else {
+        "SELECT id, outbound_id, wa_message_id, group_id, status, event_at, received_at
+         FROM whatsapp_message_status_events
+         WHERE group_id = ?1
+         ORDER BY received_at DESC
+         LIMIT ?2"
+    };
+
+    let map_row = |row: &rusqlite::Row<'_>| {
+        Ok(WhatsAppMessageStatusEvent {
+            id: row.get(0)?,
+            outbound_id: row.get(1)?,
+            wa_message_id: row.get(2)?,
+            group_id: row.get(3)?,
+            status: row.get(4)?,
+            event_at: row.get(5)?,
+            received_at: row.get(6)?,
+        })
+    };
+
+    if let Some(ref key) = batch_key.filter(|s| !s.is_empty()) {
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(params![group_id, key, max], map_row)
+            .map_err(|e| e.to_string())?;
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())
+    } else {
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(params![group_id, max], map_row)
+            .map_err(|e| e.to_string())?;
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())
+    }
 }
 
 fn read_inbound_routing_settings(conn: &Connection) -> WhatsAppInboundRoutingSettings {
@@ -3349,6 +3465,39 @@ fn process_inbound_webhook_message(
     }
 }
 
+fn log_message_status_event(
+    conn: &Connection,
+    status: &WebhookStatus,
+    event_at: &str,
+) -> Result<(), String> {
+    let row: Option<(String, Option<String>)> = conn
+        .query_row(
+            "SELECT id, group_id FROM whatsapp_outbound_messages WHERE wa_message_id = ?1",
+            params![status.id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .ok();
+    let Some((outbound_id, group_id)) = row else {
+        return Ok(());
+    };
+    conn.execute(
+        "INSERT INTO whatsapp_message_status_events
+         (id, outbound_id, wa_message_id, group_id, status, event_at, received_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        params![
+            Uuid::new_v4().to_string(),
+            outbound_id,
+            status.id,
+            group_id,
+            status.status,
+            event_at,
+            Utc::now().to_rfc3339()
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 fn update_message_status(conn: &Connection, status: &WebhookStatus) -> Result<i64, String> {
     let ts = status
         .timestamp
@@ -3378,6 +3527,7 @@ fn update_message_status(conn: &Connection, status: &WebhookStatus) -> Result<i6
                 params![status.id],
             )
             .map_err(|e| e.to_string())?;
+        let _ = log_message_status_event(conn, status, &ts);
         return Ok(n as i64);
     }
 
@@ -3389,5 +3539,8 @@ fn update_message_status(conn: &Connection, status: &WebhookStatus) -> Result<i6
     let n = conn
         .execute(&sql, params![mapped_status, ts, status.id])
         .map_err(|e| e.to_string())?;
+    if n > 0 {
+        let _ = log_message_status_event(conn, status, &ts);
+    }
     Ok(n as i64)
 }

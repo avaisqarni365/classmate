@@ -9,7 +9,10 @@ pub mod forums;
 pub mod gradebook;
 pub mod help;
 pub mod lti;
+pub mod ai_lab;
 pub mod materials;
+pub mod notes;
+pub mod openstax;
 pub mod parent;
 pub mod polls;
 pub mod push;
@@ -49,7 +52,13 @@ fn generate_pin() -> String {
 pub fn get_dashboard_stats(state: State<'_, AppState>) -> Result<DashboardStats, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
     let school_id = active_school_id_or_resolve(&state, &conn)?;
+    build_dashboard_stats(&conn, &school_id)
+}
 
+pub fn build_dashboard_stats(
+    conn: &rusqlite::Connection,
+    school_id: &str,
+) -> Result<DashboardStats, String> {
     let user_count: i64 = conn
         .query_row(
             "SELECT COUNT(*) FROM school_members WHERE school_id = ?1",
@@ -105,6 +114,13 @@ pub fn get_dashboard_stats(state: State<'_, AppState>) -> Result<DashboardStats,
 pub fn list_users(state: State<'_, AppState>) -> Result<Vec<User>, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
     let school_id = active_school_id_or_resolve(&state, &conn)?;
+    list_users_for_school(&conn, &school_id)
+}
+
+pub fn list_users_for_school(
+    conn: &rusqlite::Connection,
+    school_id: &str,
+) -> Result<Vec<User>, String> {
     let mut stmt = conn
         .prepare(
             "SELECT u.id, u.email, u.name, u.role, u.phone, u.created_at
@@ -135,6 +151,16 @@ pub fn list_users(state: State<'_, AppState>) -> Result<Vec<User>, String> {
 
 #[tauri::command]
 pub fn create_user(state: State<'_, AppState>, input: CreateUserInput) -> Result<User, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    let school_id = active_school_id_or_resolve(&state, &conn)?;
+    create_user_work(&conn, &school_id, &input)
+}
+
+pub fn create_user_work(
+    conn: &rusqlite::Connection,
+    school_id: &str,
+    input: &CreateUserInput,
+) -> Result<User, String> {
     if !matches!(input.role.as_str(), "admin" | "teacher" | "student" | "parent") {
         return Err("Invalid role".into());
     }
@@ -142,12 +168,10 @@ pub fn create_user(state: State<'_, AppState>, input: CreateUserInput) -> Result
         return Err("Password must be at least 6 characters".into());
     }
 
-    let password_hash = hash(input.password, bcrypt::DEFAULT_COST).map_err(|e| e.to_string())?;
+    let password_hash = hash(input.password.clone(), bcrypt::DEFAULT_COST).map_err(|e| e.to_string())?;
     let now = Utc::now().to_rfc3339();
     let id = Uuid::new_v4().to_string();
 
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
-    let school_id = active_school_id_or_resolve(&state, &conn)?;
     conn.execute(
         "INSERT INTO users (id, email, name, role, password_hash, created_at, updated_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
@@ -163,9 +187,9 @@ pub fn create_user(state: State<'_, AppState>, input: CreateUserInput) -> Result
 
     Ok(User {
         id,
-        email: input.email,
-        name: input.name,
-        role: input.role,
+        email: input.email.clone(),
+        name: input.name.clone(),
+        role: input.role.clone(),
         phone: None,
         created_at: now,
     })
@@ -175,6 +199,13 @@ pub fn create_user(state: State<'_, AppState>, input: CreateUserInput) -> Result
 pub fn list_courses(state: State<'_, AppState>) -> Result<Vec<Course>, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
     let school_id = active_school_id_or_resolve(&state, &conn)?;
+    list_courses_for_school(&conn, &school_id)
+}
+
+pub fn list_courses_for_school(
+    conn: &rusqlite::Connection,
+    school_id: &str,
+) -> Result<Vec<Course>, String> {
     let mut stmt = conn
         .prepare(
             "SELECT c.id, c.title, c.code, c.description, c.teacher_id, u.name,
@@ -214,11 +245,19 @@ pub fn create_course(
     state: State<'_, AppState>,
     input: CreateCourseInput,
 ) -> Result<Course, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    let school_id = active_school_id_or_resolve(&state, &conn)?;
+    create_course_work(&conn, &school_id, &input)
+}
+
+pub fn create_course_work(
+    conn: &rusqlite::Connection,
+    school_id: &str,
+    input: &CreateCourseInput,
+) -> Result<Course, String> {
     let now = Utc::now().to_rfc3339();
     let id = Uuid::new_v4().to_string();
 
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
-    let school_id = active_school_id_or_resolve(&state, &conn)?;
     conn.execute(
         "INSERT INTO courses (id, title, code, description, teacher_id, term, school_id, created_at, updated_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
@@ -249,12 +288,12 @@ pub fn create_course(
 
     Ok(Course {
         id,
-        title: input.title,
-        code: input.code,
-        description: input.description,
-        teacher_id: input.teacher_id,
+        title: input.title.clone(),
+        code: input.code.clone(),
+        description: input.description.clone(),
+        teacher_id: input.teacher_id.clone(),
         teacher_name,
-        term: input.term,
+        term: input.term.clone(),
         student_count: 0,
         created_at: now,
     })

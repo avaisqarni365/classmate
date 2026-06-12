@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClassMate Portal</title>
+  <style>
+    :root { --bg:#0f172a; --card:#1e293b; --text:#e2e8f0; --muted:#94a3b8; --accent:#2563eb; --border:#334155; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:1100px; margin:0 auto; padding:1.25rem 1rem 3rem; }
+    header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.75rem; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+    h1 { margin:0; font-size:1.25rem; }
+    .meta { color:var(--muted); font-size:.88rem; }
+    a { color:#93c5fd; }
+    .btn { background:var(--accent); color:#fff; border:none; padding:.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:600; font-size:.88rem; }
+    .btn.ghost { background:#334155; }
+    .btn.sm { padding:.35rem .65rem; font-size:.8rem; }
+    .card { background:var(--card); border-radius:12px; padding:1.15rem; margin-bottom:1rem; border:1px solid var(--border); }
+    .card h2 { margin:0 0 .75rem; font-size:1.05rem; }
+    table { width:100%; border-collapse:collapse; font-size:.85rem; }
+    th, td { border:1px solid var(--border); padding:.4rem .5rem; text-align:left; vertical-align:top; }
+    th { color:#cbd5e1; background:#0b1220; }
+    .muted { color:var(--muted); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.75rem; }
+    .stat { background:#0b1220; border-radius:8px; padding:.75rem; }
+    .stat .label { font-size:.75rem; color:var(--muted); }
+    .stat .val { font-size:1.1rem; font-weight:700; }
+    #loading { text-align:center; padding:3rem; color:var(--muted); }
+    .badge { display:inline-block; background:#334155; padding:.15rem .5rem; border-radius:4px; font-size:.75rem; text-transform:capitalize; }
+    .tabs { display:flex; gap:.5rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .tabs button { background:#334155; color:var(--text); border:none; padding:.45rem .85rem; border-radius:8px; cursor:pointer; }
+    .tabs button.active { background:var(--accent); }
+    .table-wrap { overflow-x:auto; }
+    input, select, textarea { width:100%; padding:.45rem .55rem; border-radius:6px; border:1px solid var(--border); background:#0b1220; color:var(--text); font-size:.88rem; }
+    input.grade { width:4.5rem; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:.75rem; }
+    .msg { color:#86efac; font-size:.88rem; margin-bottom:.75rem; }
+    .err { color:#fca5a5; font-size:.88rem; margin-bottom:.75rem; }
+    .ai-lab-box { margin-top:.55rem; padding:.55rem .65rem; border-radius:8px; border:1px solid #5b21b6; background:#1e1033; }
+    .ai-lab-box a.lab-btn { display:inline-block; background:#7c3aed; color:#fff; padding:.3rem .65rem; border-radius:6px; text-decoration:none; font-size:.82rem; font-weight:600; margin:.15rem .15rem .15rem 0; }
+    .ai-lab-box iframe { width:100%; height:min(420px,65vh); border:1px solid var(--border); border-radius:8px; margin-top:.45rem; }
+    .gradebook-desktop { display:block; }
+    .gradebook-mobile { display:none; }
+    .gb-student-card { border:1px solid var(--border); border-radius:10px; padding:.75rem; margin-bottom:.65rem; background:#0b1220; }
+    .gb-student-card strong { display:block; margin-bottom:.5rem; }
+    .gb-row { margin-bottom:.5rem; }
+    .gb-row label { display:block; font-size:.82rem; color:var(--muted); }
+    .tabs-scroll { display:flex; gap:.5rem; margin-bottom:1rem; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:.25rem; }
+    .tabs-scroll button { flex:0 0 auto; white-space:nowrap; }
+    @media (max-width:768px) {
+      .gradebook-desktop { display:none; }
+      .gradebook-mobile { display:block; }
+      h1 { font-size:1.1rem; }
+      .wrap { padding:1rem .75rem 2.5rem; }
+    }
+    @media (max-width:640px) {
+      .row { grid-template-columns:1fr; }
+      header { flex-direction:column; align-items:flex-start; }
+      .tabs:not(.tabs-scroll) { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+      .tabs:not(.tabs-scroll) button { flex:0 0 auto; }
+    }
+    @media (max-width:480px) {
+      .card { padding:.9rem; }
+      .btn-row-portal .btn { width:100%; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>ClassMate Portal</h1>
+        <p class="meta" id="userLine">Loading…</p>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <a class="btn ghost" href="/" style="text-decoration:none;line-height:1.6">Home</a>
+        <a class="btn ghost" href="/help" style="text-decoration:none;line-height:1.6">Help</a>
+        <button class="btn ghost" id="logoutBtn" type="button">Sign out</button>
+      </div>
+    </header>
+    <div id="flash"></div>
+    <div id="loading">Checking session…</div>
+    <div id="app" style="display:none"></div>
+  </div>
+
+  <script>
+    const app = document.getElementById('app');
+    const loading = document.getElementById('loading');
+    let flash = document.getElementById('flash');
+    let teacherState = { courses: [], courseId: '', tab: 'gradebook', book: null, announcements: [], lectures: [], captureSession: null, speechRec: null, speakListening: false, capturePoll: null };
+    let adminState = { tab: 'dashboard', courseId: '', users: [], courses: [], students: [], enrollments: [], settings: null };
+
+    function showFlash(text, ok = true) {
+      flash.innerHTML = `<p class="${ok ? 'msg' : 'err'}">${text}</p>`;
+      setTimeout(() => { flash.innerHTML = ''; }, 3500);
+    }
+
+    async function api(path, opts) {
+      const res = await fetch(path, { credentials: 'include', ...opts });
+      if (res.status === 401) {
+        window.location.href = '/#login';
+        throw new Error('auth');
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    function pct(points, max) {
+      if (points == null || !max) return '—';
+      return Math.round((points / max) * 100) + '%';
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    }
+
+    function aiLabHtml(aiLab, materialId, labCompleted) {
+      if (!aiLab) return '';
+      const done = labCompleted ? '<span class="badge" style="background:#166534;margin-left:.35rem">Complete</span>' : '';
+      const embed = aiLab.embed_url ? `<details style="margin-top:.45rem"><summary style="cursor:pointer;font-size:.82rem">Embed lab</summary>
+        <iframe src="${esc(aiLab.embed_url)}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe></details>` : '';
+      const completeBtn = (!labCompleted && materialId) ? `<button type="button" class="lab-btn" style="margin-left:.35rem;background:#0f766e" onclick="markLabComplete('${esc(materialId)}', this)">Mark complete</button>` : '';
+      return `<div class="ai-lab-box">
+        <span class="badge" style="background:#5b21b6">ARTIZAI ${esc(aiLab.lab.name)}</span>${done}
+        <div class="muted" style="font-size:.8rem;margin:.35rem 0">${esc(aiLab.lab.description)}</div>
+        <a class="lab-btn" href="${esc(aiLab.url)}" target="_blank" rel="noopener">Open AI Lab</a>${completeBtn}
+        ${embed}
+      </div>`;
+    }
+
+    async function markLabComplete(materialId, btn) {
+      btn.disabled = true;
+      try {
+        await api('/api/web/student/lab-complete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ material_id: materialId }) });
+        btn.textContent = 'Complete';
+        btn.style.background = '#166534';
+      } catch (e) {
+        btn.disabled = false;
+        alert(e.message || 'Could not save');
+      }
+    }
+    window.markLabComplete = markLabComplete;
+
+    function materialBody(m) {
+      if (m.kind === 'link') return `<a href="${esc(m.content)}" target="_blank" rel="noopener">${esc(m.content)}</a>`;
+      if (m.kind === 'speak_note') {
+        try {
+          const sn = JSON.parse(m.content);
+          const outline = sn.outline ? `<p class="muted"><strong>Outline:</strong> ${esc(sn.outline)}</p>` : '';
+          return outline + `<p class="muted" style="white-space:pre-wrap">${esc(sn.body || m.content)}</p>`;
+        } catch (_) { return esc(m.content); }
+      }
+      if (m.kind === 'handwriting') {
+        try {
+          const hw = JSON.parse(m.content);
+          if (hw.preview_data_url) return `<img src="${esc(hw.preview_data_url)}" alt="Handwriting" style="max-width:100%;border:1px solid var(--border);border-radius:6px" />`;
+          return '<span class="muted">Handwritten notes</span>';
+        } catch (_) { return esc(m.content); }
+      }
+      if (m.kind === 'textbook') {
+        try {
+          const tb = JSON.parse(m.content);
+          const links = [];
+          if (tb.read_url) links.push(`<a href="${esc(tb.read_url)}" target="_blank" rel="noopener">Read online</a>`);
+          if (tb.pdf_url) links.push(`<a href="${esc(tb.pdf_url)}" target="_blank" rel="noopener">PDF</a>`);
+          return (tb.notes ? `<p class="muted">${esc(tb.notes)}</p>` : '') + (links.length ? `<p>${links.join(' · ')}</p>` : '');
+        } catch (_) { return esc(m.content); }
+      }
+      return `<span class="muted">${esc(m.content)}</span>`;
+    }
+
+    async function renderStudent(data) {
+      const courses = data.courses || [];
+      const upcoming = data.upcoming || [];
+      const lectureGroups = await Promise.all(courses.map(async (c) => {
+        try {
+          const lectures = await api('/api/web/student/lectures?course_id=' + encodeURIComponent(c.course_id));
+          return { course: c, lectures };
+        } catch (_) {
+          return { course: c, lectures: [] };
+        }
+      }));
+      app.innerHTML = `
+        <p class="muted" style="margin-top:0">Student dashboard — courses, lecture notes with <a href="https://artizai.uk" target="_blank" rel="noopener">ARTIZAI</a> AI labs, and assignments.</p>
+        <div class="card"><h2>My courses (${courses.length})</h2>
+          ${courses.length ? `<div class="grid">${courses.map(c => `
+            <div class="stat"><div class="label">${esc(c.code)}</div><div class="val">${esc(c.title)}</div>
+              <div class="muted" style="font-size:.8rem;margin-top:.35rem">
+                ${c.teacher_name ? 'Teacher: ' + esc(c.teacher_name) + '<br>' : ''}
+                Avg: ${c.average_percent != null ? Math.round(c.average_percent) + '%' : '—'} · ${c.graded_count}/${c.assignment_count} graded
+              </div></div>`).join('')}</div>` : '<p class="muted">No enrolled courses yet.</p>'}
+        </div>
+        <div class="card"><h2>Lecture notes &amp; AI labs</h2>
+          ${lectureGroups.some(g => g.lectures.length) ? lectureGroups.map(g => `
+            <div style="margin-bottom:1rem">
+              <strong>${esc(g.course.code)} — ${esc(g.course.title)}</strong>
+              ${g.lectures.length ? g.lectures.map(entry => `
+                <div style="border-top:1px solid var(--border);padding:.65rem 0">
+                  <span class="badge">${entry.material.kind === 'textbook' ? 'OpenStax' : entry.material.kind === 'speak_note' ? 'Speak notes' : entry.material.kind === 'handwriting' ? 'Handwriting' : esc(entry.material.kind)}</span>
+                  <strong>${esc(entry.material.title)}</strong>
+                  <div style="margin-top:.35rem;font-size:.88rem">${materialBody(entry.material)}</div>
+                  ${aiLabHtml(entry.ai_lab, entry.material.id, entry.lab_completed)}
+                </div>`).join('') : '<p class="muted">No lecture notes yet.</p>'}
+            </div>`).join('') : '<p class="muted">No lecture notes yet.</p>'}
+        </div>
+        <div class="card"><h2>Assignments</h2>
+          ${upcoming.length ? `<table><thead><tr><th>Course</th><th>Assignment</th><th>Due</th><th>Score</th></tr></thead><tbody>
+            ${upcoming.map(a => `<tr><td>${esc(a.course_title)}</td><td>${esc(a.title)}</td>
+              <td>${a.due_at ? a.due_at.slice(0,10) : '—'}</td>
+              <td>${a.points != null ? a.points + ' / ' + a.max_points + ' (' + pct(a.points, a.max_points) + ')' : '<span class="muted">Pending</span>'}</td></tr>`).join('')}
+          </tbody></table>` : '<p class="muted">No assignments.</p>'}
+        </div>`;
+    }
+
+    async function renderParent() {
+      const [dashboard, grades] = await Promise.all([
+        api('/api/web/parent/dashboard'),
+        api('/api/web/parent/grades')
+      ]);
+      app.innerHTML = `
+        <p class="muted" style="margin-top:0">Parent dashboard — linked students and grade reports.</p>
+        <div class="card"><h2>Linked students</h2>
+          ${dashboard.length ? dashboard.map(s => `<div style="margin-bottom:1rem"><strong>${esc(s.student_name)}</strong>
+            ${s.courses.length ? `<table style="margin-top:.5rem"><thead><tr><th>Course</th><th>Average</th><th>Assignments</th></tr></thead><tbody>
+              ${s.courses.map(c => `<tr><td>${esc(c.course_title)}</td><td>${c.average_percent != null ? Math.round(c.average_percent) + '%' : '—'}</td><td>${c.assignment_count}</td></tr>`).join('')}
+            </tbody></table>` : '<p class="muted">No active courses.</p>'}
+          </div>`).join('') : '<p class="muted">No linked students.</p>'}
+        </div>
+        <div class="card"><h2>Grade report</h2>
+          ${grades.length ? `<table><thead><tr><th>Student</th><th>Course</th><th>Assignment</th><th>Score</th><th>Feedback</th></tr></thead><tbody>
+            ${grades.map(g => `<tr><td>${esc(g.student_name)}</td><td>${esc(g.course_title)}</td><td>${esc(g.assignment_title)}</td>
+              <td>${g.points != null ? g.points + ' / ' + g.max_points : '—'}</td><td>${esc(g.feedback || '—')}</td></tr>`).join('')}
+          </tbody></table>` : '<p class="muted">No graded work yet.</p>'}
+        </div>`;
+    }
+
+    function gradebookTable(book) {
+      if (!book.assignments.length) return '<p class="muted">No assignments in this course yet.</p>';
+      const head = book.assignments.map(a => `<th title="Max ${a.max_points}">${esc(a.title)}</th>`).join('');
+      const rows = book.students.map(st => {
+        const cells = book.assignments.map(a => {
+          const g = st.grades[a.id] || {};
+          const val = g.points != null ? g.points : '';
+          return `<td><input class="grade" type="number" step="0.1" min="0" max="${a.max_points}"
+            data-aid="${a.id}" data-sid="${st.student_id}" value="${val}" placeholder="—" /></td>`;
+        }).join('');
+        return `<tr><th scope="row">${esc(st.student_name)}</th>${cells}</tr>`;
+      }).join('');
+      const desktop = `<div class="gradebook-desktop"><div class="table-wrap"><table><thead><tr><th>Student</th>${head}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+      const mobile = `<div class="gradebook-mobile">${book.students.map(st => {
+        const cells = book.assignments.map(a => {
+          const g = st.grades[a.id] || {};
+          const val = g.points != null ? g.points : '';
+          return `<div class="gb-row"><label>${esc(a.title)} (max ${a.max_points})
+            <input class="grade" type="number" step="0.1" min="0" max="${a.max_points}"
+            data-aid="${a.id}" data-sid="${st.student_id}" value="${val}" placeholder="—" /></label></div>`;
+        }).join('');
+        return `<div class="gb-student-card"><strong>${esc(st.student_name)}</strong>${cells}</div>`;
+      }).join('')}</div>`;
+      return desktop + mobile + `<p class="muted" style="font-size:.82rem;margin-top:.5rem">Edit a score and press Tab or click outside to save.</p>`;
+    }
+
+    function announcementsList(items) {
+      if (!items.length) return '<p class="muted">No announcements yet.</p>';
+      return items.map(a => `<div style="border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.65rem">
+        <strong>${esc(a.title)}</strong>
+        <span class="muted" style="font-size:.78rem;margin-left:.5rem">${new Date(a.created_at).toLocaleString()}</span>
+        <p style="margin:.45rem 0 .35rem;white-space:pre-wrap">${esc(a.body)}</p>
+        <button class="btn sm ghost" data-del="${a.id}" type="button">Delete</button>
+      </div>`).join('');
+    }
+
+    function kindLabel(kind) {
+      if (kind === 'textbook') return 'OpenStax';
+      if (kind === 'speak_note') return 'Speak notes';
+      if (kind === 'handwriting') return 'Handwriting';
+      return kind;
+    }
+
+    function speakTextPortal(text) {
+      if (!text || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(String(text));
+      u.lang = 'en-GB';
+      window.speechSynthesis.speak(u);
+    }
+
+    function sttSupportedPortal() {
+      return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    }
+
+    function stopSpeakListen() {
+      if (teacherState.speechRec) {
+        teacherState.speechRec.stop();
+        teacherState.speechRec = null;
+      }
+      teacherState.speakListening = false;
+    }
+
+    function stopCapturePoll() {
+      if (teacherState.capturePoll) {
+        clearInterval(teacherState.capturePoll);
+        teacherState.capturePoll = null;
+      }
+    }
+
+    async function refreshCaptureSession() {
+      if (!teacherState.captureSession) return;
+      teacherState.captureSession = await api('/api/web/capture/' + encodeURIComponent(teacherState.captureSession.id));
+      const preview = document.getElementById('hwPreview');
+      if (preview && teacherState.captureSession.preview_data_url) {
+        preview.src = teacherState.captureSession.preview_data_url;
+        preview.hidden = false;
+      }
+    }
+
+    function renderTeacherShell() {
+      const courseOpts = teacherState.courses.map(c =>
+        `<option value="${c.id}" ${c.id === teacherState.courseId ? 'selected' : ''}>${esc(c.code)} — ${esc(c.title)}</option>`
+      ).join('');
+      app.innerHTML = `
+        <p class="muted" style="margin-top:0">Teacher tools — gradebook, lecture notes (speak + tablet handwriting), and announcements.</p>
+        <div class="card">
+          <label>Course
+            <select id="coursePick" style="margin-top:.35rem">${courseOpts || '<option value="">No courses</option>'}</select>
+          </label>
+        </div>
+        <div class="tabs tabs-scroll">
+          <button type="button" class="${teacherState.tab === 'gradebook' ? 'active' : ''}" data-tab="gradebook">Gradebook</button>
+          <button type="button" class="${teacherState.tab === 'lectures' ? 'active' : ''}" data-tab="lectures">Lecture notes</button>
+          <button type="button" class="${teacherState.tab === 'announcements' ? 'active' : ''}" data-tab="announcements">Announcements</button>
+        </div>
+        <div id="teacherPanel"></div>`;
+
+      document.getElementById('coursePick').onchange = async (e) => {
+        teacherState.courseId = e.target.value;
+        await loadTeacherTab();
+      };
+      app.querySelectorAll('.tabs button').forEach(btn => {
+        btn.onclick = async () => {
+          stopSpeakListen();
+          stopCapturePoll();
+          teacherState.tab = btn.dataset.tab;
+          renderTeacherShell();
+          await loadTeacherTab();
+        };
+      });
+    }
+
+    async function loadTeacherTab() {
+      const panel = document.getElementById('teacherPanel');
+      if (!teacherState.courseId) {
+        panel.innerHTML = '<div class="card"><p class="muted">Select a course.</p></div>';
+        return;
+      }
+      if (teacherState.tab === 'gradebook') {
+        teacherState.book = await api('/api/web/teacher/gradebook?course_id=' + encodeURIComponent(teacherState.courseId));
+        panel.innerHTML = `<div class="card"><h2>Gradebook — ${esc(teacherState.book.course_title)}</h2>${gradebookTable(teacherState.book)}</div>`;
+        panel.querySelectorAll('input.grade').forEach(inp => {
+          inp.addEventListener('change', async () => {
+            try {
+              await api('/api/web/teacher/grade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  assignment_id: inp.dataset.aid,
+                  student_id: inp.dataset.sid,
+                  points: inp.value === '' ? null : Number(inp.value),
+                  feedback: null
+                })
+              });
+              showFlash('Grade saved');
+            } catch (e) {
+              showFlash(e.message, false);
+            }
+          });
+        });
+      } else if (teacherState.tab === 'lectures') {
+        stopSpeakListen();
+        stopCapturePoll();
+        teacherState.lectures = await api('/api/web/teacher/lectures?course_id=' + encodeURIComponent(teacherState.courseId));
+        const list = teacherState.lectures.length ? teacherState.lectures.map(entry => `
+          <div style="border-top:1px solid var(--border);padding:.65rem 0">
+            <span class="badge">${kindLabel(entry.material.kind)}</span>
+            <strong>${esc(entry.material.title)}</strong>
+            <div style="margin-top:.35rem;font-size:.88rem">${materialBody(entry.material)}</div>
+            ${aiLabHtml(entry.ai_lab, entry.material.id, false)}
+            <button class="btn sm ghost" type="button" data-del-mat="${esc(entry.material.id)}" style="margin-top:.35rem">Delete</button>
+          </div>`).join('') : '<p class="muted">No lecture notes yet.</p>';
+        const pad = teacherState.captureSession;
+        const qr = pad && pad.pad_url ? `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(pad.pad_url)}` : '';
+        panel.innerHTML = `
+          <div class="card"><h2>Lecture notes</h2>${list}</div>
+          <div class="card"><h2>Speak notes</h2>
+            <p class="muted" style="margin-top:0;font-size:.85rem">Dictate with Chrome/Edge Web Speech API, or type manually.</p>
+            <form id="speakForm">
+              <label>Title<input name="title" required /></label>
+              <label style="margin-top:.5rem;display:block">Outline<textarea name="outline" rows="2"></textarea></label>
+              <label style="margin-top:.5rem;display:block">Notes<textarea id="speakBody" name="body" rows="4" required></textarea></label>
+              <div style="margin-top:.5rem;display:flex;gap:.35rem;flex-wrap:wrap">
+                <button type="button" class="btn ghost sm" id="speakListenBtn">${teacherState.speakListening ? 'Stop listening' : 'Start speech-to-text'}</button>
+                <button type="button" class="btn ghost sm" id="speakReadBtn">Read aloud</button>
+              </div>
+              <button class="btn" type="submit" style="margin-top:.75rem">Save speak notes</button>
+            </form>
+          </div>
+          <div class="card"><h2>Tablet handwriting</h2>
+            <p class="muted" style="margin-top:0;font-size:.85rem">Open the pad on iPad/Android with Apple Pencil or stylus.</p>
+            ${pad ? `
+              <p><strong>${esc(pad.title)}</strong></p>
+              <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-start;margin:.5rem 0">
+                ${qr ? `<img src="${qr}" alt="QR" width="140" height="140" />` : ''}
+                <div><a href="${esc(pad.pad_url)}" target="_blank" rel="noopener">${esc(pad.pad_url)}</a></div>
+              </div>
+              <img id="hwPreview" ${pad.preview_data_url ? `src="${esc(pad.preview_data_url)}"` : 'hidden'} alt="Preview" style="max-width:100%;border:1px solid var(--border);border-radius:6px" />
+              <div style="margin-top:.5rem;display:flex;gap:.35rem;flex-wrap:wrap">
+                <button type="button" class="btn ghost sm" id="hwRefreshBtn">Refresh</button>
+                <button type="button" class="btn sm" id="hwAttachBtn">Attach as lecture note</button>
+                <button type="button" class="btn ghost sm" id="hwCancelBtn">Cancel session</button>
+              </div>` : `
+              <form id="hwStartForm">
+                <label>Session title<input name="title" required placeholder="Lecture 4 diagrams" /></label>
+                <button class="btn" type="submit" style="margin-top:.75rem">Open tablet pad</button>
+              </form>`}
+          </div>`;
+        panel.querySelectorAll('[data-del-mat]').forEach(btn => {
+          btn.onclick = async () => {
+            if (!confirm('Delete this lecture note?')) return;
+            try {
+              await api('/api/web/teacher/materials/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ material_id: btn.dataset.delMat })
+              });
+              showFlash('Deleted');
+              await loadTeacherTab();
+            } catch (err) { showFlash(err.message, false); }
+          };
+        });
+        document.getElementById('speakForm').onsubmit = async (e) => {
+          e.preventDefault();
+          stopSpeakListen();
+          const fd = new FormData(e.target);
+          const body = String(fd.get('body') || '').trim();
+          const outline = String(fd.get('outline') || '').trim();
+          try {
+            await api('/api/web/teacher/materials', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                course_id: teacherState.courseId,
+                title: fd.get('title'),
+                kind: 'speak_note',
+                content: JSON.stringify({ body, outline: outline || undefined })
+              })
+            });
+            e.target.reset();
+            showFlash('Speak notes saved');
+            await loadTeacherTab();
+          } catch (err) { showFlash(err.message, false); }
+        };
+        document.getElementById('speakListenBtn')?.addEventListener('click', () => {
+          if (teacherState.speakListening) {
+            stopSpeakListen();
+            document.getElementById('speakListenBtn').textContent = 'Start speech-to-text';
+            return;
+          }
+          if (!sttSupportedPortal()) {
+            showFlash('Speech-to-text needs Chrome or Edge', false);
+            return;
+          }
+          const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+          const rec = new Ctor();
+          rec.lang = 'en-GB';
+          rec.continuous = true;
+          rec.interimResults = true;
+          const bodyEl = document.getElementById('speakBody');
+          rec.onresult = (event) => {
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              if (event.results[i].isFinal) {
+                bodyEl.value = (bodyEl.value + ' ' + event.results[i][0].transcript).trim();
+              }
+            }
+          };
+          rec.start();
+          teacherState.speechRec = rec;
+          teacherState.speakListening = true;
+          document.getElementById('speakListenBtn').textContent = 'Stop listening';
+        });
+        document.getElementById('speakReadBtn')?.addEventListener('click', () => {
+          speakTextPortal(document.getElementById('speakBody')?.value || '');
+        });
+        document.getElementById('hwStartForm')?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          try {
+            teacherState.captureSession = await api('/api/web/teacher/capture-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ course_id: teacherState.courseId, title: fd.get('title') })
+            });
+            showFlash('Tablet pad ready — scan QR on your device');
+            await loadTeacherTab();
+          } catch (err) { showFlash(err.message, false); }
+        });
+        document.getElementById('hwRefreshBtn')?.addEventListener('click', refreshCaptureSession);
+        document.getElementById('hwAttachBtn')?.addEventListener('click', async () => {
+          if (!teacherState.captureSession) return;
+          try {
+            await api('/api/web/teacher/capture/' + encodeURIComponent(teacherState.captureSession.id) + '/attach', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: teacherState.captureSession.title })
+            });
+            teacherState.captureSession = null;
+            stopCapturePoll();
+            showFlash('Handwriting attached');
+            await loadTeacherTab();
+          } catch (err) { showFlash(err.message, false); }
+        });
+        document.getElementById('hwCancelBtn')?.addEventListener('click', async () => {
+          teacherState.captureSession = null;
+          stopCapturePoll();
+          await loadTeacherTab();
+        });
+        if (teacherState.captureSession) {
+          teacherState.capturePoll = setInterval(refreshCaptureSession, 4000);
+        }
+      } else {
+        teacherState.announcements = await api('/api/web/teacher/announcements?course_id=' + encodeURIComponent(teacherState.courseId));
+        panel.innerHTML = `
+          <div class="card"><h2>New announcement</h2>
+            <form id="annForm">
+              <div class="row"><label>Title<input name="title" required /></label></div>
+              <label>Body<textarea name="body" rows="4" required></textarea></label>
+              <button class="btn" type="submit" style="margin-top:.75rem">Post announcement</button>
+            </form>
+          </div>
+          <div class="card"><h2>Announcements</h2><div id="annList">${announcementsList(teacherState.announcements)}</div></div>`;
+        document.getElementById('annForm').onsubmit = async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          try {
+            await api('/api/web/teacher/announcements', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                course_id: teacherState.courseId,
+                title: fd.get('title'),
+                body: fd.get('body')
+              })
+            });
+            e.target.reset();
+            showFlash('Announcement posted');
+            await loadTeacherTab();
+          } catch (err) {
+            showFlash(err.message, false);
+          }
+        };
+        panel.querySelectorAll('[data-del]').forEach(btn => {
+          btn.onclick = async () => {
+            if (!confirm('Delete this announcement?')) return;
+            try {
+              await api('/api/web/teacher/announcements/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: btn.dataset.del })
+              });
+              showFlash('Deleted');
+              await loadTeacherTab();
+            } catch (err) {
+              showFlash(err.message, false);
+            }
+          };
+        });
+      }
+    }
+
+    async function renderTeacher() {
+      teacherState.courses = await api('/api/web/teacher/courses');
+      if (!teacherState.courseId && teacherState.courses.length) {
+        teacherState.courseId = teacherState.courses[0].id;
+      }
+      renderTeacherShell();
+      await loadTeacherTab();
+    }
+
+    function renderAdminShell() {
+      const tabs = [
+        ['dashboard', 'Dashboard'],
+        ['users', 'Users'],
+        ['courses', 'Courses'],
+        ['enrollments', 'Enrollments'],
+        ['settings', 'Settings'],
+        ['gradebook', 'Gradebook'],
+        ['lectures', 'Lecture notes'],
+        ['announcements', 'Announcements']
+      ];
+      const courseOpts = adminState.courses.map(c =>
+        `<option value="${c.id}" ${c.id === adminState.courseId ? 'selected' : ''}>${esc(c.code)} — ${esc(c.title)}</option>`
+      ).join('');
+      app.innerHTML = `
+        <p class="muted" style="margin-top:0">Admin console — manage users, courses, enrollments, and settings. Advanced tools (WhatsApp, fees, backup): <a href="/download">desktop app</a>.</p>
+        <div class="tabs tabs-scroll">${tabs.map(([id, label]) =>
+          `<button type="button" class="${adminState.tab === id ? 'active' : ''}" data-tab="${id}">${label}</button>`
+        ).join('')}</div>
+        ${['enrollments', 'gradebook', 'lectures', 'announcements'].includes(adminState.tab) ? `
+          <div class="card"><label>Course
+            <select id="adminCoursePick" style="margin-top:.35rem">${courseOpts || '<option value="">No courses</option>'}</select>
+          </label></div>` : ''}
+        <div id="adminPanel"></div>`;
+
+      app.querySelectorAll('.tabs button').forEach(btn => {
+        btn.onclick = async () => {
+          adminState.tab = btn.dataset.tab;
+          renderAdminShell();
+          await loadAdminTab();
+        };
+      });
+      const pick = document.getElementById('adminCoursePick');
+      if (pick) {
+        pick.onchange = async (e) => {
+          adminState.courseId = e.target.value;
+          teacherState.courseId = e.target.value;
+          await loadAdminTab();
+        };
+      }
+    }
+
+    async function loadAdminTab() {
+      const panel = document.getElementById('adminPanel');
+      try {
+        if (adminState.tab === 'dashboard') {
+          const s = await api('/api/web/admin/dashboard');
+          panel.innerHTML = `<div class="card"><h2>School overview</h2><div class="grid">
+            <div class="stat"><div class="label">Members</div><div class="val">${s.user_count}</div></div>
+            <div class="stat"><div class="label">Courses</div><div class="val">${s.course_count}</div></div>
+            <div class="stat"><div class="label">Students</div><div class="val">${s.student_count}</div></div>
+            <div class="stat"><div class="label">Assignments</div><div class="val">${s.assignment_count}</div></div>
+            <div class="stat"><div class="label">Live sessions</div><div class="val">${s.active_sessions}</div></div>
+          </div></div>`;
+        } else if (adminState.tab === 'users') {
+          adminState.users = await api('/api/web/admin/users');
+          panel.innerHTML = `
+            <div class="card"><h2>Create user</h2>
+              <form id="userForm">
+                <div class="row">
+                  <label>Name<input name="name" required /></label>
+                  <label>Email<input name="email" type="email" required /></label>
+                </div>
+                <div class="row">
+                  <label>Role<select name="role" required>
+                    <option value="student">Student</option>
+                    <option value="parent">Parent</option>
+                    <option value="teacher">Teacher</option>
+                    <option value="admin">Admin</option>
+                  </select></label>
+                  <label>Password<input name="password" type="password" minlength="6" required /></label>
+                </div>
+                <button class="btn" type="submit" style="margin-top:.75rem">Create user</button>
+              </form>
+            </div>
+            <div class="card"><h2>Users (${adminState.users.length})</h2>
+              ${adminState.users.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Created</th></tr></thead><tbody>
+                ${adminState.users.map(u => `<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td><span class="badge">${esc(u.role)}</span></td><td>${u.created_at.slice(0,10)}</td></tr>`).join('')}
+              </tbody></table></div>` : '<p class="muted">No users yet.</p>'}
+            </div>`;
+          document.getElementById('userForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            try {
+              await api('/api/web/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  name: fd.get('name'),
+                  email: fd.get('email'),
+                  role: fd.get('role'),
+                  password: fd.get('password')
+                })
+              });
+              e.target.reset();
+              showFlash('User created');
+              await loadAdminTab();
+            } catch (err) { showFlash(err.message, false); }
+          };
+        } else if (adminState.tab === 'courses') {
+          adminState.courses = await api('/api/web/admin/courses');
+          adminState.users = await api('/api/web/admin/users');
+          const teachers = adminState.users.filter(u => u.role === 'teacher' || u.role === 'admin');
+          const teacherOpts = teachers.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+          panel.innerHTML = `
+            <div class="card"><h2>Create course</h2>
+              <form id="courseForm">
+                <div class="row">
+                  <label>Title<input name="title" required /></label>
+                  <label>Code<input name="code" required /></label>
+                </div>
+                <div class="row">
+                  <label>Teacher<select name="teacher_id"><option value="">— none —</option>${teacherOpts}</select></label>
+                  <label>Term<input name="term" placeholder="e.g. Fall 2026" /></label>
+                </div>
+                <label>Description<textarea name="description" rows="2"></textarea></label>
+                <button class="btn" type="submit" style="margin-top:.75rem">Create course</button>
+              </form>
+            </div>
+            <div class="card"><h2>Courses (${adminState.courses.length})</h2>
+              ${adminState.courses.length ? `<div class="table-wrap"><table><thead><tr><th>Code</th><th>Title</th><th>Teacher</th><th>Students</th><th>Term</th></tr></thead><tbody>
+                ${adminState.courses.map(c => `<tr><td>${esc(c.code)}</td><td>${esc(c.title)}</td><td>${esc(c.teacher_name || '—')}</td><td>${c.student_count}</td><td>${esc(c.term || '—')}</td></tr>`).join('')}
+              </tbody></table></div>` : '<p class="muted">No courses yet.</p>'}
+            </div>`;
+          document.getElementById('courseForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const teacherId = fd.get('teacher_id');
+            try {
+              await api('/api/web/admin/courses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: fd.get('title'),
+                  code: fd.get('code'),
+                  description: fd.get('description') || null,
+                  teacher_id: teacherId ? String(teacherId) : null,
+                  term: fd.get('term') || null
+                })
+              });
+              e.target.reset();
+              showFlash('Course created');
+              adminState.courses = await api('/api/web/admin/courses');
+              renderAdminShell();
+              await loadAdminTab();
+            } catch (err) { showFlash(err.message, false); }
+          };
+        } else if (adminState.tab === 'enrollments') {
+          if (!adminState.courseId) {
+            panel.innerHTML = '<div class="card"><p class="muted">Select a course.</p></div>';
+            return;
+          }
+          adminState.students = await api('/api/web/admin/students');
+          adminState.enrollments = await api('/api/web/admin/enrollments?course_id=' + encodeURIComponent(adminState.courseId));
+          const studentOpts = adminState.students.map(s => `<option value="${s.id}">${esc(s.name)} (${esc(s.email)})</option>`).join('');
+          panel.innerHTML = `
+            <div class="card"><h2>Enroll student</h2>
+              <form id="enrollForm" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end">
+                <label style="flex:1;min-width:200px">Student<select name="student_id" required>${studentOpts || '<option value="">No students</option>'}</select></label>
+                <button class="btn" type="submit">Enroll</button>
+              </form>
+            </div>
+            <div class="card"><h2>Enrollments (${adminState.enrollments.length})</h2>
+              ${adminState.enrollments.length ? `<div class="table-wrap"><table><thead><tr><th>Student</th><th>Email</th><th>Status</th><th>Enrolled</th><th></th></tr></thead><tbody>
+                ${adminState.enrollments.map(en => `<tr><td>${esc(en.student_name)}</td><td>${esc(en.student_email)}</td><td>${esc(en.status)}</td><td>${en.enrolled_at.slice(0,10)}</td>
+                  <td><button class="btn sm ghost" data-unenroll="${en.id}" type="button">Remove</button></td></tr>`).join('')}
+              </tbody></table></div>` : '<p class="muted">No enrollments in this course.</p>'}
+            </div>`;
+          document.getElementById('enrollForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            try {
+              await api('/api/web/admin/enrollments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ course_id: adminState.courseId, student_id: fd.get('student_id') })
+              });
+              showFlash('Student enrolled');
+              await loadAdminTab();
+            } catch (err) { showFlash(err.message, false); }
+          };
+          panel.querySelectorAll('[data-unenroll]').forEach(btn => {
+            btn.onclick = async () => {
+              if (!confirm('Remove this enrollment?')) return;
+              try {
+                await api('/api/web/admin/enrollments/unenroll', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ enrollment_id: btn.dataset.unenroll })
+                });
+                showFlash('Enrollment removed');
+                await loadAdminTab();
+              } catch (err) { showFlash(err.message, false); }
+            };
+          });
+        } else if (adminState.tab === 'settings') {
+          adminState.settings = await api('/api/web/admin/settings');
+          const s = adminState.settings;
+          panel.innerHTML = `
+            <div class="card"><h2>School settings</h2>
+              <p class="muted">School name: <strong>${esc(s.school_name)}</strong> (change in desktop app)</p>
+              <form id="settingsForm">
+                <label>Public base URL<input name="public_base_url" value="${esc(s.public_base_url || '')}" placeholder="https://cm.codes-ai.uk" /></label>
+                <label style="margin-top:.75rem;display:block">Public hub path<input name="public_hub_path" value="${esc(s.public_hub_path || '/hub')}" /></label>
+                <button class="btn" type="submit" style="margin-top:.75rem">Save settings</button>
+              </form>
+            </div>`;
+          document.getElementById('settingsForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            try {
+              await api('/api/web/admin/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  public_base_url: fd.get('public_base_url') || null,
+                  public_hub_path: fd.get('public_hub_path') || null
+                })
+              });
+              showFlash('Settings saved');
+              await loadAdminTab();
+            } catch (err) { showFlash(err.message, false); }
+          };
+        } else if (adminState.tab === 'gradebook' || adminState.tab === 'lectures' || adminState.tab === 'announcements') {
+          if (!adminState.courseId) {
+            panel.innerHTML = '<div class="card"><p class="muted">Select a course.</p></div>';
+            return;
+          }
+          teacherState.tab = adminState.tab;
+          teacherState.courseId = adminState.courseId;
+          panel.innerHTML = '<div id="teacherPanel"></div>';
+          await loadTeacherTab();
+        }
+      } catch (err) {
+        panel.innerHTML = `<div class="card"><p class="err">${esc(err.message)}</p></div>`;
+      }
+    }
+
+    async function renderAdmin() {
+      adminState.courses = await api('/api/web/admin/courses');
+      if (!adminState.courseId && adminState.courses.length) {
+        adminState.courseId = adminState.courses[0].id;
+      }
+      teacherState.courses = adminState.courses;
+      teacherState.courseId = adminState.courseId;
+      renderAdminShell();
+      await loadAdminTab();
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/web/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = '/';
+    });
+
+    (async () => {
+      try {
+        const user = await api('/api/web/me');
+        document.getElementById('userLine').innerHTML =
+          `${esc(user.name)} · ${esc(user.email)} · <span class="badge">${esc(user.role)}</span>`;
+        loading.style.display = 'none';
+        app.style.display = 'block';
+        if (user.role === 'student') await renderStudent(await api('/api/web/student/dashboard'));
+        else if (user.role === 'parent') await renderParent();
+        else if (user.role === 'admin') await renderAdmin();
+        else if (user.role === 'teacher') await renderTeacher();
+        else app.innerHTML = '<div class="card"><p>Unsupported role.</p></div>';
+      } catch (e) {
+        if (e.message !== 'auth') loading.textContent = 'Error loading portal. Try signing in again.';
+      }
+    })();
+  </script>
+</body>
+</html>

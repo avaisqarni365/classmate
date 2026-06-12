@@ -32,7 +32,7 @@ pub fn get_parent_dashboard(
     build_parent_dashboard(&conn, &parent_id)
 }
 
-fn build_parent_dashboard(
+pub fn build_parent_dashboard(
     conn: &rusqlite::Connection,
     parent_id: &str,
 ) -> Result<Vec<ParentStudentSummary>, String> {

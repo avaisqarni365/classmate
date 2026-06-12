@@ -104,7 +104,14 @@ pub fn get_student_dashboard(state: State<'_, AppState>) -> Result<StudentDashbo
     let user = require_student(&state)?;
     let conn = state.db.lock().map_err(|e| e.to_string())?;
     let school_id = active_school_id_or_resolve(&state, &conn)?;
+    build_student_dashboard(&conn, &user.id, &school_id)
+}
 
+pub fn build_student_dashboard(
+    conn: &rusqlite::Connection,
+    student_id: &str,
+    school_id: &str,
+) -> Result<StudentDashboard, String> {
     let mut course_stmt = conn
         .prepare(
             "SELECT c.id FROM courses c
@@ -115,14 +122,14 @@ pub fn get_student_dashboard(state: State<'_, AppState>) -> Result<StudentDashbo
         .map_err(|e| e.to_string())?;
 
     let course_ids: Vec<String> = course_stmt
-        .query_map(params![user.id, school_id], |row| row.get(0))
+        .query_map(params![student_id, school_id], |row| row.get(0))
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
 
     let mut courses = Vec::new();
     for cid in &course_ids {
-        courses.push(course_summary(&conn, cid, &user.id)?);
+        courses.push(course_summary(conn, cid, student_id)?);
     }
 
     let mut upcoming_stmt = conn
@@ -139,7 +146,7 @@ pub fn get_student_dashboard(state: State<'_, AppState>) -> Result<StudentDashbo
         .map_err(|e| e.to_string())?;
 
     let upcoming = upcoming_stmt
-        .query_map(params![user.id, school_id], |row| map_assignment_grade(&conn, row))
+        .query_map(params![student_id, school_id], |row| map_assignment_grade(conn, row))
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;

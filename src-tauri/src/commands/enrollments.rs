@@ -12,6 +12,13 @@ pub fn list_enrollments(
     course_id: String,
 ) -> Result<Vec<Enrollment>, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
+    list_enrollments_for_course(&conn, &course_id)
+}
+
+pub fn list_enrollments_for_course(
+    conn: &rusqlite::Connection,
+    course_id: &str,
+) -> Result<Vec<Enrollment>, String> {
     let mut stmt = conn
         .prepare(
             "SELECT e.id, e.course_id, e.student_id, u.name, u.email, e.status, e.enrolled_at
@@ -46,10 +53,16 @@ pub fn enroll_student(
     state: State<'_, AppState>,
     input: EnrollStudentInput,
 ) -> Result<Enrollment, String> {
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    enroll_student_work(&conn, &input)
+}
+
+pub fn enroll_student_work(
+    conn: &rusqlite::Connection,
+    input: &EnrollStudentInput,
+) -> Result<Enrollment, String> {
     let now = Utc::now().to_rfc3339();
     let id = Uuid::new_v4().to_string();
-
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
 
     let role: String = conn
         .query_row(
@@ -89,8 +102,8 @@ pub fn enroll_student(
 
     Ok(Enrollment {
         id: enrollment_id,
-        course_id: input.course_id,
-        student_id: input.student_id,
+        course_id: input.course_id.clone(),
+        student_id: input.student_id.clone(),
         student_name,
         student_email,
         status: "active".into(),
@@ -101,6 +114,10 @@ pub fn enroll_student(
 #[tauri::command]
 pub fn unenroll_student(state: State<'_, AppState>, enrollment_id: String) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
+    unenroll_student_work(&conn, &enrollment_id)
+}
+
+pub fn unenroll_student_work(conn: &rusqlite::Connection, enrollment_id: &str) -> Result<(), String> {
     conn.execute(
         "UPDATE enrollments SET status = 'inactive' WHERE id = ?1",
         params![enrollment_id],
@@ -113,6 +130,13 @@ pub fn unenroll_student(state: State<'_, AppState>, enrollment_id: String) -> Re
 pub fn list_students(state: State<'_, AppState>) -> Result<Vec<crate::models::User>, String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
     let school_id = active_school_id_or_resolve(&state, &conn)?;
+    list_students_for_school(&conn, &school_id)
+}
+
+pub fn list_students_for_school(
+    conn: &rusqlite::Connection,
+    school_id: &str,
+) -> Result<Vec<crate::models::User>, String> {
     let mut stmt = conn
         .prepare(
             "SELECT u.id, u.email, u.name, u.role, u.phone, u.created_at

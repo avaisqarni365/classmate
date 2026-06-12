@@ -112,6 +112,7 @@ pub fn build_backup(conn: &rusqlite::Connection) -> Result<BackupPayload, String
         email_log: table_to_json(conn, "email_log")?,
         push_devices: table_to_json(conn, "push_devices")?,
         push_log: table_to_json(conn, "push_log")?,
+        whatsapp_message_status_events: table_to_json(conn, "whatsapp_message_status_events")?,
     })
 }
 
@@ -164,6 +165,7 @@ fn import_v1(conn: &rusqlite::Connection, payload: &BackupPayload) -> Result<(),
 fn import_v2(conn: &rusqlite::Connection, payload: &BackupPayload) -> Result<(), String> {
     for table in [
         "whatsapp_consent_log",
+        "whatsapp_message_status_events",
         "whatsapp_scheduled_broadcasts",
         "whatsapp_inbound_messages",
         "email_log",
@@ -313,6 +315,10 @@ pub fn get_setting(state: State<'_, AppState>, key: String) -> Result<Option<Str
 #[tauri::command]
 pub fn set_setting(state: State<'_, AppState>, key: String, value: String) -> Result<(), String> {
     let conn = state.db.lock().map_err(|e| e.to_string())?;
+    set_setting_work(&conn, &key, &value)
+}
+
+pub fn set_setting_work(conn: &rusqlite::Connection, key: &str, value: &str) -> Result<(), String> {
     conn.execute(
         "INSERT INTO settings (key, value) VALUES (?1, ?2)
          ON CONFLICT(key) DO UPDATE SET value = excluded.value",

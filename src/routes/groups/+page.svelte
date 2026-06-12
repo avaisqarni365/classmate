@@ -22,6 +22,8 @@
 
     WhatsAppOutboundMessage,
 
+    WhatsAppBroadcastSummary,
+
     WhatsAppGroupRosterDiff,
 
     WhatsAppJoinRequest,
@@ -43,6 +45,8 @@
   let members = $state<WhatsAppGroupMember[]>([]);
 
   let messages = $state<WhatsAppOutboundMessage[]>([]);
+
+  let broadcastSummaries = $state<WhatsAppBroadcastSummary[]>([]);
 
   let inboundMessages = $state<WhatsAppInboundMessage[]>([]);
 
@@ -101,11 +105,15 @@
 
       messages = [];
 
+      broadcastSummaries = [];
+
       return;
 
     }
 
     messages = await api.listWhatsAppOutboundMessages(selectedGroupId, 30);
+
+    broadcastSummaries = await api.listWhatsAppBroadcastSummaries(selectedGroupId, 15);
 
   }
 
@@ -1459,6 +1467,86 @@
         </tbody>
 
       </table>
+
+    {/if}
+
+  </div>
+
+
+
+  <div class="card" style="margin-top:1rem">
+
+    <h3 style="margin-top:0">Broadcast delivery summary</h3>
+
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:.75rem">
+      Aggregated sent, delivered, and read counts from WhatsApp status webhooks per broadcast batch.
+    </p>
+
+    {#if !apiConfigured}
+
+      <p class="empty">Configure WhatsApp Business API in Settings to track delivery.</p>
+
+    {:else if broadcastSummaries.length === 0}
+
+      <p class="empty">No broadcasts yet for this group.</p>
+
+    {:else}
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>When</th>
+
+              <th>Kind</th>
+
+              <th>Total</th>
+
+              <th>Sent</th>
+
+              <th>Delivered</th>
+
+              <th>Read</th>
+
+              <th>Failed</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {#each broadcastSummaries as batch}
+
+              <tr>
+
+                <td>{new Date(batch.started_at).toLocaleString()}</td>
+
+                <td><span class="badge">{batch.kind}</span></td>
+
+                <td>{batch.total}</td>
+
+                <td>{batch.sent + batch.pending}</td>
+
+                <td>{batch.delivered}</td>
+
+                <td>{batch.read}</td>
+
+                <td>{batch.failed}</td>
+
+              </tr>
+
+            {/each}
+
+          </tbody>
+
+        </table>
+
+      </div>
 
     {/if}
 

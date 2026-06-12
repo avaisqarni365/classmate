@@ -309,8 +309,9 @@
 </div>
 
 {#if reviewAttempt}
-  <div class="modal-backdrop" onclick={() => (reviewAttempt = null)}>
-    <div class="card modal" onclick={(e) => e.stopPropagation()}>
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div class="modal-backdrop" role="presentation" onclick={() => (reviewAttempt = null)}>
+    <div class="card modal" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()}>
       <h3 style="margin-top: 0">Review: {reviewAttempt.attempt.student_name}</h3>
       <p style="color: var(--muted)">
         Auto score {reviewAttempt.attempt.score}/{reviewAttempt.attempt.max_score}

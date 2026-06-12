@@ -2,6 +2,7 @@ use crate::commands::help::find_windows_installer;
 use crate::commands::sync::{apply_backup, build_backup};
 use crate::commands::whatsapp_api::{apply_webhook_payload, verify_webhook_token};
 use crate::models::{BackupPayload, SyncServerStatus};
+use crate::web_portal::HttpServerState;
 use axum::{
     extract::{Query, State as AxumState},
     http::{header, HeaderMap, StatusCode},
@@ -63,11 +64,9 @@ impl SyncRuntime {
         std::thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
             rt.block_on(async move {
-                let app_state = SyncServerState {
-                    db,
-                    sync_token: token_for_routes,
-                };
+                let app_state = HttpServerState::new(db, token_for_routes);
                 let app = Router::new()
+                    .merge(crate::web_portal::site_routes())
                     .route("/download", get(download_page))
                     .route("/download/win", get(download_installer))
                     .route("/help", get(help_page))
@@ -107,12 +106,6 @@ impl SyncRuntime {
     }
 }
 
-#[derive(Clone)]
-struct SyncServerState {
-    db: Arc<Mutex<Connection>>,
-    sync_token: String,
-}
-
 #[derive(Serialize)]
 struct SyncInfoResponse {
     name: String,
@@ -140,7 +133,7 @@ fn authorize(headers: &HeaderMap, expected: &str) -> Result<(), StatusCode> {
     Ok(())
 }
 
-async fn sync_info(AxumState(state): AxumState<SyncServerState>) -> Json<SyncInfoResponse> {
+async fn sync_info(AxumState(state): AxumState<HttpServerState>) -> Json<SyncInfoResponse> {
     let name = {
         let conn = state.db.lock().ok();
         conn.and_then(|c| {
@@ -160,7 +153,7 @@ async fn sync_info(AxumState(state): AxumState<SyncServerState>) -> Json<SyncInf
 }
 
 async fn sync_export(
-    AxumState(state): AxumState<SyncServerState>,
+    AxumState(state): AxumState<HttpServerState>,
     headers: HeaderMap,
 ) -> Result<Json<BackupPayload>, StatusCode> {
     authorize(&headers, &state.sync_token)?;
@@ -171,7 +164,7 @@ async fn sync_export(
 }
 
 async fn sync_import(
-    AxumState(state): AxumState<SyncServerState>,
+    AxumState(state): AxumState<HttpServerState>,
     headers: HeaderMap,
     Json(payload): Json<BackupPayload>,
 ) -> Result<StatusCode, StatusCode> {
@@ -182,7 +175,7 @@ async fn sync_import(
 }
 
 async fn whatsapp_verify(
-    AxumState(state): AxumState<SyncServerState>,
+    AxumState(state): AxumState<HttpServerState>,
     Query(query): Query<WhatsAppVerifyQuery>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let mode = query.hub_mode.as_deref().unwrap_or("");
@@ -200,7 +193,7 @@ async fn whatsapp_verify(
 }
 
 async fn whatsapp_event(
-    AxumState(state): AxumState<SyncServerState>,
+    AxumState(state): AxumState<HttpServerState>,
     body: String,
 ) -> Result<StatusCode, StatusCode> {
     let conn = state.db.lock().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
